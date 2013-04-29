@@ -118,7 +118,7 @@ par(old.par)
 # display of robustness weights
 plot( 
     y~x, meuse, 
-    cex = sqrt( r.logzn.rob$weights ) , asp = 1 
+    cex = sqrt( r.logzn.rob$rweights ) , asp = 1 
 )
 
 
@@ -128,7 +128,7 @@ plot(
 
 r.cv.georob.reml<- cv( 
     r.logzn.reml, 
-    seed.for.sets = 1,
+    seed = 1,
     lgn = TRUE, 
     return.fit = TRUE,
     verbose = 0
@@ -137,7 +137,7 @@ summary( r.cv.georob.reml )
 
 r.cv.georob.rob <- cv( 
     r.logzn.rob, 
-    seed.for.sets = 1,
+    seed = 1,
     lgn = TRUE, 
     return.fit = TRUE,
     verbose = 1
@@ -254,7 +254,7 @@ library(constrainedKriging)
 r.luk.block <- predict( 
     r.logzn.rob,
     newdata = meuse.blocks,
-    type = "observation",
+    type = "response",
     extended.output = TRUE,
     pwidth = 75, pheight = 75
 )
@@ -280,8 +280,6 @@ spplot(
     r.luk.block, zcol = "lgn.se", col.regions = f.colors(100), 
     at = t.breaks.se, main = "Standardfehler Block-LUK-Vorhersage Zn-Gehalt"
 )
-
-graphics.off()
 
 
 ## 

@@ -19,7 +19,7 @@ sample variogram of the (robust) regression residuals.
 
 \usage{
 \method{plot}{georob}(x, type, plot.sv = TRUE, add = FALSE, lag.class.def, 
-xy.angle.def = c(0, 180), xz.angle.def = c(0, 180), 
+    xy.angle.def = c(0, 180), xz.angle.def = c(0, 180), 
     max.lag = Inf, estimator = c("mad", "qn", "ch", "matheron"), 
     mean.angle = TRUE, col, pch, lty, ...)
 

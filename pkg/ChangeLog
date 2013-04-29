@@ -43,3 +43,9 @@ processing col and pch arguments
 * georob.private.functions.R (compute.covariances, update.betahat.bhat, estimate.betahat.bhat, compute.estimating equations, georob.fit): new names for robustness weights
 * georob.S3methods.R (ranef.georob, rstandard.georob, summary.georob, print.summary.georob): new names for robustness weights
 * georob.xvalid.R (cv.georob): changes for parallelization on windows os
+
+
+2013-04-29  Andreas Papritz  <papritz@env.ethz.ch>
+
+* georob_example.R: correction of argument names in examples
+
