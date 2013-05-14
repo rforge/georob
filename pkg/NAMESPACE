@@ -1,4 +1,4 @@
-import( parallel, stats )
+import( stats )
 
 importFrom( constrainedKriging, covmodel, f.point.block.cov, K, preCKrige )
 importFrom( lmtest, waldtest, waldtest.default )

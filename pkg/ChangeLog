@@ -49,3 +49,16 @@ processing col and pch arguments
 
 * georob_example.R: correction of argument names in examples
 
+
+2013-05-12  Andreas Papritz  <papritz@env.ethz.ch>
+
+* variogram.R (plot.sample.variogram): correction of handling optional arguments
+
+
+2013-05-14  Andreas Papritz  <papritz@env.ethz.ch>
+
+* DESCRIPTION: attaching instead of importing functionS of package parallel
+* NAMESPACE: attaching instead of importing functionS of package parallel
+
+
+

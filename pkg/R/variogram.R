@@ -367,10 +367,11 @@ plot.sample.variogram <-
   
   ## 2012-12-12 A. Papritz
   ## 2012-12-21 AP correction for using col and pch
+  ## 2913-05-12 AP correction for using ...
   
   if( !add ) plot( 
     gamma ~ lag.dist, x, type = "n",
-    xlim = xlim, ylim = ylim, xlab = xlab, ylab = ylab
+    xlim = xlim, ylim = ylim, xlab = xlab, ylab = ylab, ...
   )
   
   if( missing( col ) ){
