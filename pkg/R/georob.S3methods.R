@@ -169,6 +169,7 @@ ranef.georob <- random.effects.georob <-
   ## 2012-10-18 AP changes for new definition of eta
   ## 2012-11-26 AP method for random.effects
   ## 2013-04-23 AP new names for robustness weights
+  ## 2013-05-23 AP correct handling of missing observations
   
   object$Valpha.objects <- expand( object$Valpha.objects )
   object$cov       <- expand( object$cov )
@@ -247,7 +248,8 @@ ranef.georob <- random.effects.georob <-
     
   }
   
-  return( bhat )        
+  bhat <- naresid( object$na.action, bhat )
+  return( bhat )
   
 }
 
@@ -282,6 +284,7 @@ residuals.georob <- resid.georob <-
   function( 
     object,
     type = c("working", "response", "deviance", "pearson", "partial" ), 
+    terms = NULL,
     level = 1,
     ...
   )
@@ -300,6 +303,7 @@ residuals.georob <- resid.georob <-
   
   ## 2011-10-13 A. Papritz    
   ## 2011-12-14 AP modified for replicated observations
+  ## 2013-05-23 AP modified for computing partial residuals for single terms
   
   type <- match.arg( type )
   
@@ -315,14 +319,15 @@ residuals.georob <- resid.georob <-
     partial = r
   )
   
+  res <- naresid(object$na.action, res)
+    
   if( level == 0 && any( type %in% c( "working", "response", "partial" ) ) ){
     res <- res + ranef( object, standard = FALSE )[object$Tmat]
   }
   
-  res <- naresid(object$na.action, res)
   if( type == "partial" ) 
-    res <- res + predict( object, type = "terms" )$fit
-  res
+    res <- res + predict( object, type = "terms", terms = terms )$fit
+  drop( res )
 }
 
 
@@ -347,6 +352,7 @@ rstandard.georob <-
   ## 2012-01-05 AP modified for compress storage of matrices
   ## 2012-10-18 AP changes for new definition of eta
   ## 2013-04-23 AP new names for robustness weights
+  ## 2013-05-23 AP correct handling of missing observations
   
   object <- model
   object$Valpha.objects <- expand( object$Valpha.objects )
@@ -425,6 +431,8 @@ rstandard.georob <-
   }
   
   ## compute standardized residuals
+  
+  se <- naresid( model$na.action, se )
   
   residuals( model, level = level ) / se
   
@@ -867,6 +875,13 @@ deviance.georob <-
   ## deviance method for class georob
   
   ## 2012-12-22 A. Papritz
+  ## 2013-05-23 AP correct handling of missing observations
+  
+  ## redefine na.action component of object
+  
+  if( identical( class( object$na.action ), "exclude" ) ){
+    class( object$na.action ) <- "omit"
+  }
   
   if( object[["tuning.psi"]] < georob.control()[["tuning.psi.nr"]] ){
     result <- NA_real_

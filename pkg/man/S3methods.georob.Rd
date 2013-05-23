@@ -1,4 +1,4 @@
-% 2012-12-22 A. Papritz
+% 2013-05-23 A. Papritz
 % R CMD Rdconv -t html -o bla.html S3methods.georob.Rd ; open bla.html; R CMD Rd2pdf --force S3methods.georob.Rd; 
 
 \encoding{macintosh}
@@ -55,10 +55,12 @@
 
 \method{resid}{georob}(object, 
     type = c("working", "response", "deviance", "pearson", "partial" ), 
+    terms = NULL,
     level = 1, ... )
 
 \method{residuals}{georob}(object, 
     type = c("working", "response", "deviance", "pearson", "partial" ), 
+    terms  = NULL,
     level = 1, ... )
     
 \method{rstandard}{georob}(model, level = 1, ...)
@@ -123,6 +125,8 @@
   
   \item{type}{character keyword indicating the type of residuals to compute, see
   \code{\link[stats]{residuals.lm}}.}
+  
+  \item{terms}{If \code{type = "terms"}, which terms (default is all terms).}
   
   \item{verbose}{positive integer controlling logging of diagnostic
   messages to the console during model fitting by \code{\link{georob}}.}

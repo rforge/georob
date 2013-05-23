@@ -1,6 +1,6 @@
 2012-12-18  Andreas Papritz  <papritz@env.ethz.ch>
 
-* georob.xvalid.R (print.cv.georob, print.summary.cv.georob): return invisible(x)
+* georob.cv.R (print.cv.georob, print.summary.cv.georob): return invisible(x)
 * georob.S3methods.R (print.georob, print.summary.georob): return invisible(x)
 * variogram.R (print.summary.sample.variogram, print.fitted.variogram)
 (print.summary.fitted.variogram): return invisible(x)
@@ -42,7 +42,7 @@ processing col and pch arguments
 * georob.predict.R (predict.georob): new names for robustness weights
 * georob.private.functions.R (compute.covariances, update.betahat.bhat, estimate.betahat.bhat, compute.estimating equations, georob.fit): new names for robustness weights
 * georob.S3methods.R (ranef.georob, rstandard.georob, summary.georob, print.summary.georob): new names for robustness weights
-* georob.xvalid.R (cv.georob): changes for parallelization on windows os
+* georob.cv.R (cv.georob): changes for parallelization on windows os
 
 
 2013-04-29  Andreas Papritz  <papritz@env.ethz.ch>
@@ -59,6 +59,17 @@ processing col and pch arguments
 
 * DESCRIPTION: attaching instead of importing functionS of package parallel
 * NAMESPACE: attaching instead of importing functionS of package parallel
+
+
+
+2013-05-23  Andreas Papritz  <papritz@env.ethz.ch>
+
+* georob.cv.R (cv.georob): correct handling of missing observations
+* georob.exported.functions.R (georob): improved way to handle missing observations and to construct model.frame
+* georob.predict.R (predict.georob): correct handling of missing observations
+* georob.S3methods.R (georob.residuals): new argument "terms"
+* georob.S3methods.R (ranef.georob, rstandard.georob,deviance.georob): correct handling of missing observations
+* variogram.R (plot.georob): correct handling of missing observations
 
 
 

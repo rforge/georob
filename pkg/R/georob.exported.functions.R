@@ -75,6 +75,7 @@ georob <-
   ## 2012-05-07 AP correction of error for constant trend
   ## 2012-05-28 AP handle missing names of coefficients after calling update
   ## 2013-04-23 AP new names for robustness weights
+  ## 2013-05-23 AP correct handling of missing observations and to construct model.frame
   
   ## check whether input is complete
   
@@ -87,12 +88,22 @@ georob <-
   ret.x <- x
   ret.y <- y
   
-  ## vector with row number of included observations
+#   ## vector with row number of included observations
+#   
+#   in.subset <- 1:NROW( data )
+#   if( !missing( subset ) ) in.subset <- in.subset[subset]
   
-  in.subset <- 1:NROW( data )
-  if( !missing( subset ) ) in.subset <- in.subset[subset]
+  ## build combined formula for fixed effects and locations
   
-  ## start setting-up model frames
+  extended.formula <- update( 
+    formula,
+    paste( 
+      paste( as.character( formula )[c(2, 1, 3)], collapse = " " ),
+      as.character( locations )[2], sep = " + "
+    )
+  )
+  
+  ## setting-up model frame
   
   cl <- match.call()
   mf <- match.call( expand.dots = FALSE )
@@ -101,47 +112,24 @@ georob <-
     names(mf), 0L 
   )
   mf <- mf[c(1L, m)]
+  mf$formula <- extended.formula
   mf$drop.unused.levels <- TRUE
   mf[[1L]] <- as.name( "model.frame" )
   
-  ## spot missing observations for fixed effects
+  mf <- eval( mf, parent.frame() )
   
-  mf.try <- eval( mf, parent.frame() )
-  if( !is.null( attr( mf.try, "na.action" ) ) ){
-    ex.mf <- unname( unclass( attr( mf.try, "na.action" ) ) )
-  } else ex.mf <- integer(0)
-  ##     if( verbose > 3 ) cat( "ex.mf    :", ex.mf, "\n" )
+  ## eliminate intercept from locations
   
-  ## spot missing observations for locations
+  locations <- as.formula( paste( deparse( locations ), "-1" ), env = parent.frame() )
   
-  locations <-
-    as.formula( paste( deparse( locations ), "-1" ), env = parent.frame() )
-  mf.loc <- mf
-  mf.loc$formula <- locations
-  mf.loc.try <- eval( mf.loc, parent.frame() )
-  if( !is.null( attr( mf.loc.try, "na.action" ) ) ){
-    ex.mf.loc <- unname( unclass( attr( mf.loc.try, "na.action" ) ) )
-  } else ex.mf.loc <- integer( 0 )
-  ##     if( verbose > 3 ) cat( "ex.mf.loc:", ex.mf.loc, "\n" )
+  ## setting-up terms objects
   
-  ## missing observations either for fixed effects or locations
+  mt     <- terms( formula )
+  mt.loc <- terms( locations )
+    
+  ## ... and assign fixed effects terms object as attribute to model.frame
   
-  ex <- sort( unique( c( ex.mf.loc, ex.mf ) ) )
-  ##     if( verbose > 3 ) cat( "ex       :", ex, "\n" )
-  
-  ## new subset argument taking account of all missing observations
-  
-  if( length( ex ) ) in.subset <- in.subset[-ex]
-  ##     if( verbose > 3 ) cat( "in.subset:", in.subset, "\n" )
-  mf$subset <- mf.loc$subset <- in.subset
-  
-  ## final model frames for fixed effects and locations
-  
-  mf     <- eval( mf,     parent.frame() )
-  mf.loc <- eval( mf.loc, parent.frame() )
-  
-  mt     <- attr( mf,     "terms" )
-  mt.loc <- attr( mf.loc, "terms" )
+  attr( mf, "terms" ) <- mt
   
   ## check whether 'empty' models have been entered
   
@@ -155,10 +143,10 @@ georob <-
   
   if( identical( attr( mt, "intercept" ), 0L ) && 
     variogram.model %in% georob.control()$irf.model )
-    stop(
-      "the fixed effects model must include an intercept ",
-      "if an unbounded variogram model is used"
-    )
+  stop(
+    "the fixed effects model must include an intercept ",
+    "if an unbounded variogram model is used"
+  )
   
   ## extract fixed effects response variable, weights, offset and design matrix
   
@@ -271,7 +259,7 @@ georob <-
   
   ## compute coordinates of locations and distance object
   
-  locations.coords <- model.matrix( mt.loc, mf.loc )
+  locations.coords <- model.matrix( mt.loc, mf )
   
   if( 
     !( missing( aniso ) || missing( fit.aniso ) ) && 

@@ -79,6 +79,7 @@ function(
   ## 2013-01-19 AP correction of error in computing lag distance matrix between support 
   ##               and prediction points
   ## 2013-04-23 AP new names for robustness weights
+  ## 2013-05-23 AP correct handling of missing observations
 
   
   ##  ##############################################################################
@@ -851,8 +852,8 @@ function(
       pred <- switch(
         type,
         "response" = model.response( model.frame( object ) ),
-        "signal" = fitted( object ) + object[["bhat"]][object[["Tmat"]]],
-        "trend" = fitted( object )
+        "signal" = object$fitted.values + object[["bhat"]][object[["Tmat"]]],
+        "trend" = object$fitted.values
       )
       
       var.pred <- NULL
@@ -978,14 +979,30 @@ function(
           t.result[["cov.pred.target"]] 
         }
       }
-            
-      if( full.covmat )  result <- c(
-        list( pred = result, mse.pred = mse.pred ), 
-        if( !is.null(var.pred) ) list( var.pred = var.pred ),
-        if( !is.null(var.target) ) list( var.target = var.target ),
-        if( !is.null(cov.pred.target) ) list( cov.pred.target = cov.pred.target )
-      )
       
+      result <- as.data.frame( napredict( object$na.action, as.matrix( result ) ) )
+            
+      if( full.covmat ){
+        
+        result <- c(
+          list( pred = result, 
+            mse.pred = napredict( object$na.action, t( napredict( object$na.action, mse.pred ) ) ) 
+          ), 
+          if( !is.null(var.pred) ) list( 
+            var.pred = napredict( object$na.action, t( napredict( object$na.action, var.pred ) ) ) 
+          ),
+          if( !is.null(var.target) ) list( 
+            var.target = napredict( object$na.action, t( napredict( object$na.action, var.target ) ) )
+          ),
+          if( !is.null(cov.pred.target) ) list( 
+            cov.pred.target = napredict( 
+              object$na.action, t( napredict( object$na.action, cov.pred.target ) ) 
+            )
+          )
+        )
+      }
+      
+        
     }
     ## end no newdata object
     
@@ -1278,11 +1295,13 @@ function(
   
   if( missing( newdata ) || is.null( newdata ) ){
     
+    coords <- napredict( object$na.action, object[["locations.objects"]][["coordinates"]] )
+    
     if( !identical( type, "terms" ) ){
       if( full.covmat ){
-        result[["pred"]] <- data.frame( object[["locations.objects"]][["coordinates"]], result[["pred"]] )
+        result[["pred"]] <- data.frame( coords, result[["pred"]] )
       } else {
-        result <- data.frame( object[["locations.objects"]][["coordinates"]], result )
+        result <- data.frame( coords, result )
       }
     }
     

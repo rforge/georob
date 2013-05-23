@@ -1167,6 +1167,8 @@ plot.georob <-
   ## 2012-12-11 A. Papritz
   ## 2012-12-21 AP correction for using col and pch 
   
+  x$na.action <- NULL
+  
   estimator <- match.arg( estimator )
   
   ## compute sample variogram

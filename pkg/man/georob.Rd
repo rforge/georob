@@ -1,4 +1,4 @@
-% 2012-12-12 A. Papritz
+% 2013-05-23 A. Papritz
 % R CMD Rdconv -t html -o bla.html georob.Rd ; open bla.html; R CMD Rd2pdf --force georob.Rd; 
 
 \encoding{macintosh}
@@ -58,7 +58,7 @@ georob(formula, data, subset, weights, na.action, model = TRUE,
     
   \item{model, x, y}{logicals.  If \code{TRUE} the corresponding components
     of the fit (the model frame, the model matrix, the response) are
-    returned.}
+    returned. The model frame is augmented by the coordinates.}
     
   \item{contrasts}{an optional list.  See the \code{contrasts.arg} of
     \code{\link{model.matrix.default}}.}
@@ -99,7 +99,7 @@ georob(formula, data, subset, weights, na.action, model = TRUE,
       \item{\code{scale}: range parameter (\eqn{\alpha}) of the variogram.}
      
       \item{names of additional variogram parameters such as the smoothness
-      parameter \eqn{\nu} of the Whittle-Mat?rn model as passed by the
+      parameter \eqn{\nu} of the Whittle-Matérn model as passed by the
       argument \code{param} to \code{\link[RandomFields]{Variogram}}, see
       \code{\link{param.names}}.}
        

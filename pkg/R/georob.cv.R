@@ -70,6 +70,7 @@ cv.georob <-
   ## 2012-11-04 AP handling compressed cov.betahat
   ## 2012-12-04 AP modifiction for changes in predict.georob
   ## 2013-04-24 AP changes for parallelization on windows os
+  ## 2013-05-23 AP correct handling of missing observations
     
   ## auxiliary function that fits the model and computes the predictions of
   ## a cross-validation set
@@ -78,7 +79,7 @@ cv.georob <-
     ..i.., object, formula, data, sets, re.estimate, param, fit.param, lgn, verbose, ...
   ){  ## cv function
     
-    if (verbose) cat( "  processing cross-validation set", ..i.., "\n" ) 
+    if (verbose) cat( "\n\n  processing cross-validation set", ..i.., "\n" ) 
     
     ## fit model to complement of current set
     
@@ -161,6 +162,12 @@ cv.georob <-
     
     return( list( pred = t.predict, fit = t.georob ) )
     ## end cv function
+  }
+  
+  ## redefine na.action component of object
+  
+  if( identical( class( object$na.action ), "exclude" ) ){
+    class( object$na.action ) <- "omit"
   }
   
   ## update terms of object is formula is provided
