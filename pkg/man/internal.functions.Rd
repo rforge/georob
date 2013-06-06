@@ -1,12 +1,11 @@
-% 2013-01-20 A. Papritz
+% 2013-06-03 A. Papritz
 % R CMD Rdconv -t html -o bla.html internal.functions.Rd ; open bla.html; R CMD Rd2pdf --force internal.functions.Rd 
 \name{internal.functions}
 \alias{compute.covariances}
 \alias{compute.estimating.equations}
 \alias{compute.semivariance}
-\alias{compute.U}
 \alias{dcorr.dparam}
-\alias{estimate.betahat.bhat}
+\alias{estimate.xihat}
 \alias{gcr}
 \alias{georob.fit}
 \alias{getCall.georob}
@@ -14,7 +13,7 @@
 \alias{K}
 \alias{negative.restr.loglikelihood}
 \alias{prepare.likelihood.calculations}
-\alias{update.betahat.bhat}
+\alias{update.xihat}
 %
 \title{Internal Functions of Package \pkg{georob}}
 %
@@ -23,9 +22,8 @@ The internal, unexported functions
 \code{compute.covariances},
 \code{compute.estimating.equations},
 \code{compute.semivariance},
-\code{compute.U},
 \code{dcorr.dparam},
-\code{estimate.betahat.bhat},
+\code{estimate.xihat},
 \code{gcr},
 \code{georob.fit},
 \code{getCall.georob},
@@ -33,7 +31,7 @@ The internal, unexported functions
 \code{K},
 \code{negative.restr.loglikelihood},
 \code{prepare.likelihood.calculations},
-\code{update.betahat.bhat}
+\code{update.xihat}
 are not intended for direct use.  However, as any unexported function they
 can be accessed by typing
 \code{georob:::\var{function-name}}.

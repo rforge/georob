@@ -76,6 +76,7 @@ georob <-
   ## 2012-05-28 AP handle missing names of coefficients after calling update
   ## 2013-04-23 AP new names for robustness weights
   ## 2013-05-23 AP correct handling of missing observations and to construct model.frame
+  ## 2013-06-03 AP handling design matrices with rank < ncol(x)
   
   ## check whether input is complete
   
@@ -177,11 +178,21 @@ georob <-
   min.max.sv <- range( svd( crossprod( x ) )$d )
   condnum <- min.max.sv[1] / min.max.sv[2] 
   
-  
-  if( condnum <= control$min.condnum ) stop( 
-    "design matrix has not full column rank (condition number of X^T X: ", 
-    signif( condnum, 2 ), ")"
-  )
+  if( condnum <= control$min.condnum ){
+    if( initial.param || tuning.psi >= control$tuning.psi.nr ) stop(
+      "singular fixed effects design matrices cannot be handled if 'initial.param = TRUE'",
+      "or for Gaussian REML estimation"
+    )
+    cat( 
+      "design matrix has not full column rank (condition number of X^T X: ", 
+      signif( condnum, 2 ), ")\ninitial values of regression coefficients are computed by 'lm\n\n'"
+    )
+    control$initial.method <- "lm"
+    warning( 
+      "design matrix has not full column rank (condition number of X^T X: ", 
+      signif( condnum, 2 ), ")\ninitial values of regression coefficients are computed by 'lm'"
+    )
+  }
   
   ## subtract offset
   
@@ -224,7 +235,7 @@ georob <-
       fit$formula <- formula
       fit$terms <- mt
       fit$xlevels <- .getXlevels(mt, mf)
-      fit$call <- call
+      fit$call <- cl
       fit$tau <- tau
       fit$weights <- w
       fit$residuals <- drop( fit$residuals )
@@ -248,6 +259,27 @@ georob <-
       if( control$lmrob$compute.rd && !is.null(x) )
       fit$MD <- robustbase:::robMD( x, attr( mt, "intercept" ) )
       if( !is.null( offset ) ) fit$fitted.values + offset
+      fit
+      
+    },
+    lm = {
+      
+      fit <- if( is.null(w) ){
+        lm.fit(x, y, offset = offset, singular.ok = TRUE, ...)
+      } else {
+        lm.wfit(x, y, w, offset = offset, singular.ok = TRUE, ...)
+      }
+      class(fit) <- c(if (is.matrix(y)) "mlm", "lm")
+      fit$na.action <- attr(mf, "na.action")
+      fit$offset <- offset
+      fit$contrasts <- attr(x, "contrasts")
+      fit$xlevels <- .getXlevels(mt, mf)
+      fit$call <- cl
+      fit$terms <- mt
+      if (model) fit$model <- mf
+      if (ret.x) fit$x <- x
+      if (ret.y) fit$y <- y
+      fit$qr <- NULL
       fit
       
     }
@@ -336,12 +368,13 @@ georob <-
       cov.bhat = control$cov.bhat, full.cov.bhat = control$full.cov.bhat,
       cov.betahat = control$cov.betahat, 
       cov.bhat.betahat = control$cov.bhat.betahat,
-      cov.delta.bhat = control$cov.delta.bhat,
-      full.cov.delta.bhat = control$full.cov.delta.bhat,
-      cov.delta.bhat.betahat = control$cov.delta.bhat.betahat,
+      cov.deltabhat = control$cov.deltabhat,
+      full.cov.deltabhat = control$full.cov.deltabhat,
+      cov.deltabhat.betahat = control$cov.deltabhat.betahat,
       cov.ehat = control$cov.ehat, full.cov.ehat = control$full.cov.ehat,
       cov.ehat.p.bhat = control$cov.ehat.p.bhat, full.cov.ehat.p.bhat = control$full.cov.ehat.p.bhat,
       aux.cov.pred.target = control$aux.cov.pred.target,
+      min.condnum = control$min.condnum,
       psi.func = control$psi.func,
       tuning.psi.nr = control$tuning.psi.nr,
       irwls.initial = control$irwls.initial,
@@ -400,12 +433,13 @@ georob <-
     cov.bhat = control$cov.bhat, full.cov.bhat = control$full.cov.bhat,
     cov.betahat = control$cov.betahat, 
     cov.bhat.betahat = control$cov.bhat.betahat,
-    cov.delta.bhat = control$cov.delta.bhat,
-    full.cov.delta.bhat = control$full.cov.delta.bhat,
-    cov.delta.bhat.betahat = control$cov.delta.bhat.betahat,
+    cov.deltabhat = control$cov.deltabhat,
+    full.cov.deltabhat = control$full.cov.deltabhat,
+    cov.deltabhat.betahat = control$cov.deltabhat.betahat,
     cov.ehat = control$cov.ehat, full.cov.ehat = control$full.cov.ehat,
     cov.ehat.p.bhat = control$cov.ehat.p.bhat, full.cov.ehat.p.bhat = control$full.cov.ehat.p.bhat,
     aux.cov.pred.target = control$aux.cov.pred.target,
+    min.condnum = control$min.condnum,
     psi.func = control$psi.func,
     tuning.psi.nr = control$tuning.psi.nr,
     irwls.initial = control$irwls.initial,
@@ -469,7 +503,7 @@ georob <-
 
 georob.control <- 
   function(
-    initial.method = c("lmrob", "rq"),
+    initial.method = c("lmrob", "rq", "lm"),
     bhat = NULL,
     param.tf = param.transf(),
     fwd.tf = fwd.transf(), 
@@ -486,8 +520,8 @@ georob.control <-
     cov.bhat = FALSE, full.cov.bhat = FALSE,
     cov.betahat = TRUE, 
     cov.bhat.betahat = FALSE,
-    cov.delta.bhat = TRUE, full.cov.delta.bhat = TRUE,
-    cov.delta.bhat.betahat = TRUE,
+    cov.deltabhat = TRUE, full.cov.deltabhat = TRUE,
+    cov.deltabhat.betahat = TRUE,
     cov.ehat = TRUE, full.cov.ehat = FALSE,
     cov.ehat.p.bhat = FALSE, full.cov.ehat.p.bhat = FALSE,
     aux.cov.pred.target = FALSE,
@@ -535,10 +569,10 @@ georob.control <-
   ##                   should be computed
   ## cov.bhat.betahat  logical, flag controlling whether the covariance matrix of 
   ##                   bhat and betahat should be computed
-  ## cov.delta.bhat      logical, flag controlling whether the covariances of z-bhat should be computed
-  ## full.cov.delta.bhat logical, flag controlling whether the full covariance matrix of z-bhat 
+  ## cov.deltabhat      logical, flag controlling whether the covariances of z-bhat should be computed
+  ## full.cov.deltabhat logical, flag controlling whether the full covariance matrix of z-bhat 
   ##                   is computed (TRUE) or only the diagonal elements (FALSE)
-  ## cov.delta.bhat.betahat    logical, flag controlling whether the covariance matrix of z-bhat
+  ## cov.deltabhat.betahat    logical, flag controlling whether the covariance matrix of z-bhat
   ##                    and betahat should be computed
   ## cov.ehat        logical, flag controlling whether the covariances of the resdiuals should be computed
   ## full.cov.ehat   logical, flag controlling whether the full covariance matrix of the residuals 
@@ -587,8 +621,8 @@ georob.control <-
     cov.bhat = cov.bhat, full.cov.bhat = full.cov.bhat,
     cov.betahat = cov.betahat, 
     cov.bhat.betahat = cov.bhat.betahat,
-    cov.delta.bhat = cov.delta.bhat, full.cov.delta.bhat = full.cov.delta.bhat,
-    cov.delta.bhat.betahat = cov.delta.bhat.betahat,
+    cov.deltabhat = cov.deltabhat, full.cov.deltabhat = full.cov.deltabhat,
+    cov.deltabhat.betahat = cov.deltabhat.betahat,
     cov.ehat = cov.ehat, full.cov.ehat = full.cov.ehat,
     cov.ehat.p.bhat = cov.ehat.p.bhat, full.cov.ehat.p.bhat = full.cov.ehat.p.bhat,
     aux.cov.pred.target = aux.cov.pred.target,

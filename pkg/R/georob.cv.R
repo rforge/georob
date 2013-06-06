@@ -71,6 +71,7 @@ cv.georob <-
   ## 2012-12-04 AP modifiction for changes in predict.georob
   ## 2013-04-24 AP changes for parallelization on windows os
   ## 2013-05-23 AP correct handling of missing observations
+  ## 2013-05-24 AP separate initial variogram parameters for each cross-validation set
     
   ## auxiliary function that fits the model and computes the predictions of
   ## a cross-validation set
@@ -96,6 +97,11 @@ cv.georob <-
     
     environment( formula ) <- environment()
     environment( object$terms ) <- environment()
+    
+    ## read-off initial values of variogram parameters
+    
+    if( ( is.matrix( param ) || is.data.frame( param ) ) )  param <- param[..i..,]
+    if( ( is.matrix( fit.param ) || is.data.frame( fit.param ) ) )  fit.param <- fit.param[..i..,]
 
     t.georob <- update( 
       object, 
@@ -212,6 +218,7 @@ cv.georob <-
 
   } else {
     
+    nset <- length( unique( sets ) )
     if( length( sets ) != NROW( data ) ) stop(
       "sets must be an integer vector with length equal to the number of observations"      
     )
@@ -230,6 +237,16 @@ cv.georob <-
     function( x ) x
   )
   
+  ## check dimension of param and fit.param
+  
+  if( ( is.matrix( param ) || is.data.frame( param ) ) && nrow( param )!= nset ) stop(
+    "param must have 'nset' rows if it is a matrix or data frame"  
+  )
+    
+  if( ( is.matrix( fit.param ) || is.data.frame( fit.param ) ) && nrow( param )!= nset ) stop(
+    "fit.param must have 'nset' rows if it is a matrix or data frame"  
+  )
+    
   ## loop over all cross-validation sets
   
   if( .Platform$OS.type == "windows" ){
@@ -320,9 +337,9 @@ cv.georob <-
   
   t.fit <- lapply( t.result, function( x ) return( x$fit ) )
   
-  if( re.estimate && !all( sapply( t.fit, function(x) x$converged ) ) )
-  warning(
-    "lack of covergence when fitting model to cross-validation sets"
+  if( re.estimate && !all( sapply( t.fit, function(x) x$converged ) ) ) warning(
+    "lack of covergence for  ", 
+    sum( !sapply( t.fit, function(x) x$converged ) ), " cross-validation sets"
   )
   
   result <- list( 

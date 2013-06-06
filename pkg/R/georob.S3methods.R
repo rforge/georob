@@ -169,21 +169,30 @@ ranef.georob <- random.effects.georob <-
   ## 2012-10-18 AP changes for new definition of eta
   ## 2012-11-26 AP method for random.effects
   ## 2013-04-23 AP new names for robustness weights
-  ## 2013-05-23 AP correct handling of missing observations
+  ## 2013-05-31 AP correct handling of missing observations
+  ## 2013-05-31 AP revised expansion of covariance matrices
+  ## 2013-05-06 AP changes for solving estimating equations for xi
   
-  object$Valpha.objects <- expand( object$Valpha.objects )
-  object$cov       <- expand( object$cov )
+  ## temporarily redefine na.action component of object
+  
+  object.na <- object$na.action
+  if( identical( class( object$na.action ), "exclude" ) ){
+    class( object$na.action ) <- "omit"
+  }
+
+  Valpha.objects <- expand( object$Valpha.objects )
+  covmat         <- expand( object$cov )
   
   bhat <- object$bhat   
   
   if( standard ){
     
-    if( is.null( object$cov$cov.bhat ) ){
+    if( is.null( covmat$cov.bhat ) ){
       
       ## compute standard errors of residuals
       
-      if( is.null( object$Valpha.objects$Valpha.inverse ) || 
-        is.null( object$Valpha.objects$Valpha.ilcf ) 
+      if( is.null( Valpha.objects$Valpha.inverse ) || 
+        is.null( Valpha.objects$Valpha.ilcf ) 
       ) stop( 
         "'Valpha.objects' incomplete or missing in georob object;\n", 
         "'Valpha.objects' must include components 'Valpha.inverse' and 'Valpha.ilcf'"
@@ -194,12 +203,12 @@ ranef.georob <- random.effects.georob <-
       )
       
       
-      if( is.null( object$Valpha.objects$Valpha.ucf ) ){
+      if( is.null( Valpha.objects$Valpha.ucf ) ){
         
         ## compute upper cholesky factor of correlation matrix Valpha
         ## which is needed to compute cov( bhat )
         
-        object$Valpha.objects$Valpha.ucf <- t( solve( object$Valpha.objects$Valpha.ilcf ) )
+        Valpha.objects$Valpha.ucf <- t( solve( Valpha.objects$Valpha.ilcf ) )
         
       }            
       
@@ -209,7 +218,9 @@ ranef.georob <- random.effects.georob <-
       )[!duplicated( object$Tmat ), , drop = FALSE]
       
       r.cov <- compute.covariances(
-        Valpha.objects = object$Valpha.objects,
+        Valpha.objects = Valpha.objects,
+        Aalpha = object[["Aalpha"]],
+        Palpha = expand( object[["Palpha"]] ),
         rweights = object$rweights,
         XX = X, TT = object$Tmat, names.yy = rownames( model.frame( object ) ),
         nugget = object$param["nugget"],
@@ -218,8 +229,8 @@ ranef.georob <- random.effects.georob <-
         cov.bhat = TRUE, full.cov.bhat = FALSE,
         cov.betahat = FALSE, 
         cov.bhat.betahat = FALSE,
-        cov.delta.bhat = FALSE, full.cov.delta.bhat = FALSE,
-        cov.delta.bhat.betahat = FALSE,
+        cov.deltabhat = FALSE, full.cov.deltabhat = FALSE,
+        cov.deltabhat.betahat = FALSE,
         cov.ehat = FALSE, full.cov.ehat = FALSE,
         cov.ehat.p.bhat = FALSE, full.cov.ehat.p.bhat = FALSE,
         aux.cov.pred.target = FALSE,
@@ -236,10 +247,10 @@ ranef.georob <- random.effects.georob <-
       
       ## extract standard errors of residuals from georob object
       
-      if( is.matrix( object$cov$cov.bhat ) ){
-        se <- sqrt( diag( object$cov$cov.bhat ) )
+      if( is.matrix( covmat$cov.bhat ) ){
+        se <- sqrt( diag( covmat$cov.bhat ) )
       } else {
-        se <- sqrt( object$cov$cov.bhat )
+        se <- sqrt( covmat$cov.bhat )
       }
       
     }
@@ -248,8 +259,7 @@ ranef.georob <- random.effects.georob <-
     
   }
   
-  bhat <- naresid( object$na.action, bhat )
-  return( bhat )
+  naresid( object.na, bhat )
   
 }
 
@@ -303,11 +313,18 @@ residuals.georob <- resid.georob <-
   
   ## 2011-10-13 A. Papritz    
   ## 2011-12-14 AP modified for replicated observations
-  ## 2013-05-23 AP modified for computing partial residuals for single terms
+  ## 2013-05-31 AP modified for computing partial residuals for single terms
   
   type <- match.arg( type )
   
   if( !level %in% 1:0 ) stop( "wrong level: must be either 1 or 0" )
+  
+  ## temporarily redefine na.action component of object
+  
+  object.na <- object$na.action
+  if( identical( class( object$na.action ), "exclude" ) ){
+    class( object$na.action ) <- "omit"
+  }
   
   r <- object$residuals
   res <- switch(
@@ -319,7 +336,6 @@ residuals.georob <- resid.georob <-
     partial = r
   )
   
-  res <- naresid(object$na.action, res)
     
   if( level == 0 && any( type %in% c( "working", "response", "partial" ) ) ){
     res <- res + ranef( object, standard = FALSE )[object$Tmat]
@@ -328,6 +344,8 @@ residuals.georob <- resid.georob <-
   if( type == "partial" ) 
     res <- res + predict( object, type = "terms", terms = terms )$fit
   drop( res )
+  
+  naresid( object.na, res )
 }
 
 
@@ -352,53 +370,63 @@ rstandard.georob <-
   ## 2012-01-05 AP modified for compress storage of matrices
   ## 2012-10-18 AP changes for new definition of eta
   ## 2013-04-23 AP new names for robustness weights
-  ## 2013-05-23 AP correct handling of missing observations
+  ## 2013-05-31 AP correct handling of missing observations
+  ## 2013-05-31 AP revised expansion of covariance matrices
+  ## 2013-05-06 AP changes for solving estimating equations for xi
   
-  object <- model
-  object$Valpha.objects <- expand( object$Valpha.objects )
-  object$cov       <- expand( object$cov )
+  ## temporarily redefine na.action component of model
+  
+  model.na <- model$na.action
+  if( identical( class( model$na.action ), "exclude" ) ){
+    class( model$na.action ) <- "omit"
+  }
+  
+  Valpha.objects <- expand( model$Valpha.objects )
+  covmat         <- expand( model$cov )
   
   if( !level %in% 1:0 ) stop( "wrong level: must be either 1 or 0" )
   
   if( 
-    ( is.null( object$cov$cov.ehat ) & level == 1 ) ||
-    ( is.null( object$cov$cov.ehat.p.bhat ) & level == 0 ) 
+    ( is.null( covmat$cov.ehat ) & level == 1 ) ||
+    ( is.null( covmat$cov.ehat.p.bhat ) & level == 0 ) 
   ){
     
     ## compute standard errors of residuals
     
-    if( is.null( object$Valpha.objects$Valpha.inverse ) || 
-      is.null( object$Valpha.objects$Valpha.ilcf ) 
+    if( is.null( Valpha.objects$Valpha.inverse ) || 
+      is.null( Valpha.objects$Valpha.ilcf ) 
     ) stop( 
       "'Valpha.objects' incomplete or missing in georob object;\n", 
       "'Valpha.objects' must include components 'Valpha.inverse' and 'Valpha.ilcf'"
     )
-    if( is.null( object$expectations ) ) stop( 
+    if( is.null( model$expectations ) ) stop( 
       "'expectations' missing in georob object;\n",
       "use 'full.output = TRUE' when fitting the model"
     )
     
     X <- model.matrix( 
-      terms( object), 
-      model.frame( object ) 
-    )[!duplicated( object$Tmat ), , drop = FALSE]
+      terms( model), 
+      model.frame( model ) 
+    )[!duplicated( model$Tmat ), , drop = FALSE]
     
-    if( is.null( object$Valpha.objects$Valpha.ucf ) ){
-      object$Valpha.objects$Valpha.ucf <- t( solve( object$Valpha.objects$Valpha.ilcf ) )
+    if( is.null( Valpha.objects$Valpha.ucf ) ){
+      Valpha.objects$Valpha.ucf <- t( solve( Valpha.objects$Valpha.ilcf ) )
     }
     
     r.cov <- compute.covariances(
-      Valpha.objects = object$Valpha.objects,
-      rweights = object$rweights,
-      XX = X, TT = object$Tmat, names.yy = rownames( model.frame( object ) ),
-      nugget = object$param["nugget"],
-      eta = sum( object$param[c( "variance", "snugget")] ) / object$param["nugget"],
-      expectations = object$expectations,
+      Valpha.objects = Valpha.objects,
+      Aalpha = model[["Aalpha"]],
+      Palpha = expand( model[["Palpha"]] ),
+      rweights = model$rweights,
+      XX = X, TT = model$Tmat, names.yy = rownames( model.frame( model ) ),
+      nugget = model$param["nugget"],
+      eta = sum( model$param[c( "variance", "snugget")] ) / model$param["nugget"],
+      expectations = model$expectations,
       cov.bhat = FALSE, full.cov.bhat = FALSE,
       cov.betahat = FALSE, 
       cov.bhat.betahat = FALSE,
-      cov.delta.bhat = FALSE, full.cov.delta.bhat = FALSE,
-      cov.delta.bhat.betahat = FALSE,
+      cov.deltabhat = FALSE, full.cov.deltabhat = FALSE,
+      cov.deltabhat.betahat = FALSE,
       cov.ehat = level == 1, full.cov.ehat = FALSE,
       cov.ehat.p.bhat = level == 0, full.cov.ehat.p.bhat = FALSE,
       aux.cov.pred.target = FALSE,
@@ -410,9 +438,9 @@ rstandard.georob <-
     )
     
     if( level == 1 ){
-      object$cov$cov.ehat <-r.cov$cov.ehat 
+      covmat$cov.ehat <-r.cov$cov.ehat 
     } else {
-      object$cov$cov.ehat.p.bhat <-r.cov$cov.ehat.p.bhat 
+      covmat$cov.ehat.p.bhat <-r.cov$cov.ehat.p.bhat 
     }
     
   } 
@@ -420,9 +448,9 @@ rstandard.georob <-
   ## extract standard errors of residuals from georob object
   
   if( level == 1 ){
-    se <- object$cov$cov.ehat
+    se <- covmat$cov.ehat
   } else {
-    se <- object$cov$cov.ehat.p.bhat
+    se <- covmat$cov.ehat.p.bhat
   }
   if( is.matrix( se ) ){
     se <- sqrt( diag( se ) )
@@ -432,9 +460,7 @@ rstandard.georob <-
   
   ## compute standardized residuals
   
-  se <- naresid( model$na.action, se )
-  
-  residuals( model, level = level ) / se
+  naresid( model.na, residuals( model, level = level ) / se )
   
 }
 
@@ -489,8 +515,9 @@ summary.georob <-
   ## 2012-11-04 AP handling compressed cov.betahat
   ## 2012-11-27 AP changes in parameter back-transformation
   ## 2013-04-23 AP new names for robustness weights
+  ## 2013-05-31 AP revised expansion of covariance matrices
   
-  object$cov       <- expand( object$cov )
+  covmat       <- expand( object$cov )
   
   ans <- object[c(
     "call", "residuals", "bhat", "rweights", "converged", "convergence.code", 
@@ -507,7 +534,7 @@ summary.georob <-
   ans$scale <- sqrt(object$param["nugget"])
   ans$control$method <- "TODO: PRINT GLSROB CONTROL PARAMETERS HERE"
   
-  se <- sqrt(diag(expand(object$cov$cov.betahat)))
+  se <- sqrt(diag(covmat$cov.betahat))
   est <- object$coefficients
   tval <- est/se
   
@@ -519,7 +546,7 @@ summary.georob <-
   )
   
   if( correlation ){
-    ans$correlation <- expand( object$cov$cov.betahat ) / outer(se, se)
+    ans$correlation <- covmat$cov.betahat / outer(se, se)
   }
   
   ans$param <- as.matrix( object$param, ncol = 1 )
@@ -619,12 +646,12 @@ summary.georob <-
     } 
   }
   
-  ans$se.residuals <- if( !is.null( object$cov$cov.ehat ) ){
+  ans$se.residuals <- if( !is.null( covmat$cov.ehat ) ){
     
-    if( is.matrix( object$cov$cov.ehat ) ){
-      sqrt( diag( object$cov$cov.ehat ) )
+    if( is.matrix( covmat$cov.ehat ) ){
+      sqrt( diag( covmat$cov.ehat ) )
     } else {
-      sqrt( object$cov$cov.ehat )
+      sqrt( covmat$cov.ehat )
     }
     
   } else NULL
@@ -876,6 +903,7 @@ deviance.georob <-
   
   ## 2012-12-22 A. Papritz
   ## 2013-05-23 AP correct handling of missing observations
+  ## 2013-05-31 AP revised expansion of covariance matrices
   
   ## redefine na.action component of object
   
@@ -886,12 +914,11 @@ deviance.georob <-
   if( object[["tuning.psi"]] < georob.control()[["tuning.psi.nr"]] ){
     result <- NA_real_
   } else {
-    object[["Valpha.objects"]] <- expand( object[["Valpha.objects"]] )
+    Valpha.objects <- expand( object[["Valpha.objects"]] )
     G <- sum( object[["param"]][c("variance", "snugget")] ) *
-      t(object[["Valpha.objects"]][["Valpha.ucf"]]) %*% object[["Valpha.objects"]][["Valpha.ucf"]]
+      t(Valpha.objects[["Valpha.ucf"]]) %*% Valpha.objects[["Valpha.ucf"]]
       
     diag( G ) <- diag( G ) + object[["param"]]["nugget"]
-    object[["Valpha.objects"]] <- compress( object[["Valpha.objects"]] )
     G <- G[object[["Tmat"]], object[["Tmat"]]]
     iucf <- try(
       backsolve( 

@@ -124,7 +124,7 @@ well as model terms for display by \code{\link[stats]{termplot}}.
     \eqn{\mathrm{Var}_{\hat{\theta}}[\widehat{Y}(\mbox{\boldmath$s$\unboldmath})]}{Var[hatY(s)]} or 
     \eqn{\mathrm{Var}_{\hat{\theta}}[\widehat{S}(\mbox{\boldmath$s$\unboldmath})]}{Var[hatS(s)]},
 
-    \item \code{cov.pred.target}: the covariances between the predictions and the
+    \item \code{aux.cov.pred.target}: the covariances between the predictions and the
     prediction targets,\cr
     \eqn{\mathrm{Cov}_{\hat{\theta}}[\widehat{Y}(\mbox{\boldmath$s$\unboldmath}),Y(\mbox{\boldmath$s$\unboldmath})]}{Cov[hatY(s),Y(s)]} or 
     \eqn{\mathrm{Cov}_{\hat{\theta}}[\widehat{S}(\mbox{\boldmath$s$\unboldmath}),S(\mbox{\boldmath$s$\unboldmath})]}{Cov[hatS(s),S(s)]},
@@ -173,7 +173,7 @@ well as model terms for display by \code{\link[stats]{termplot}}.
     \item \code{lower}, \code{upper}: the limits of tolerance/confidence
     intervals,
     
-    \item \code{trend}, \code{var.pred}, \code{cov.pred.target},
+    \item \code{trend}, \code{var.pred}, \code{aux.cov.pred.target},
     \code{var.target}: only present if \code{extend.output} is \code{TRUE},
     see \emph{Details}.
     
@@ -195,7 +195,7 @@ well as model terms for display by \code{\link[stats]{termplot}}.
     \item \code{var.pred}: the full covariance matrix of the
     kriging predictions, see \emph{Details}.
     
-    \item \code{cov.pred.target}: the full covariance matrix of the
+    \item \code{aux.cov.pred.target}: the full covariance matrix of the
     predictions and the prediction targets, see \emph{Details}.
     
     \item \code{var.target}: the full covariance matrix of the

@@ -68,8 +68,25 @@ processing col and pch arguments
 * georob.exported.functions.R (georob): improved way to handle missing observations and to construct model.frame
 * georob.predict.R (predict.georob): correct handling of missing observations
 * georob.S3methods.R (georob.residuals): new argument "terms"
-* georob.S3methods.R (ranef.georob, rstandard.georob,deviance.georob): correct handling of missing observations
+* georob.S3methods.R (ranef.georob, residuals.georob, rstandard.georob, deviance.georob): correct handling of missing observations
 * variogram.R (plot.georob): correct handling of missing observations
 
 
+2013-05-24  Andreas Papritz  <papritz@env.ethz.ch>
+
+* georob.cv.R (cv.georob): separate initial variogram parameters for each cross-validation set
+
+
+2013-05-31  Andreas Papritz  <papritz@env.ethz.ch>
+
+* georob.S3methods.R (ranef.georob, residuals.georob,rstandard.georob,deviance.georob): correct handling of missing observations
+* georob.S3methods.R (deviance.georob, ranef.georob, rstandard.georob, summary.georob): revised expansion of covariance matrices
+
+
+2013-06-06  Andreas Papritz  <papritz@env.ethz.ch>
+
+* georob.exported.function.R (georob, georob.control): handling fixed effects model matrices with rank < ncol(x)
+* georob.private.function.R (prepare.likelihood.calculations, compute.estimating.equations, negative.restr.loglikelihood, negative.restr.loglikelihood, gradient.negative.restricted.loglikelihood, georob.fit) : solving estimating equations for xi
+* georob.S3methods.R ranef.georob, rstandard.georob) : solving estimating equations for xi
+* georob.private.function.R (compute.covariances, estimate.xihat, update.xihat, negative.restr.loglikelihood): solving estimating equations for xi
 

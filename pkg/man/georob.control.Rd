@@ -1,4 +1,4 @@
-% 2012-12-12 A. Papritz
+% 2013-06-06 A. Papritz
 % R CMD Rdconv -t html -o bla.html georob.control.Rd ; open bla.html; R CMD Rd2pdf --force georob.control.Rd; 
 \encoding{macintosh}
 \name{georob.control}
@@ -22,7 +22,7 @@
   \code{\link{georob}}.}
 
 \usage{
-georob.control(initial.method = c("lmrob", "rq"), bhat = NULL, 
+georob.control(initial.method = c("lmrob", "rq", "lm"), bhat = NULL, 
     param.tf = param.transf(),fwd.tf = fwd.transf(), 
     deriv.fwd.tf = dfwd.transf(), bwd.tf = bwd.transf(), 
     safe.param = 1.e12, psi.func = c("logistic", "t.dist", "huber"),
@@ -32,8 +32,8 @@ georob.control(initial.method = c("lmrob", "rq"), bhat = NULL,
     force.gradient = FALSE, zero.dist = sqrt(.Machine$double.eps),
     cov.bhat = FALSE, full.cov.bhat = FALSE, cov.betahat = TRUE, 
     cov.bhat.betahat = FALSE, 
-    cov.delta.bhat = TRUE, full.cov.delta.bhat = TRUE,
-    cov.delta.bhat.betahat = TRUE,
+    cov.deltabhat = TRUE, full.cov.deltabhat = TRUE,
+    cov.deltabhat.betahat = TRUE,
     cov.ehat = TRUE, full.cov.ehat = FALSE,
     cov.ehat.p.bhat = FALSE, full.cov.ehat.p.bhat = FALSE,
     aux.cov.pred.target = FALSE, min.condnum = 1.e-12,
@@ -73,8 +73,10 @@ optim.control(optim.method = c("BFGS", "Nelder-Mead", "CG",
   \item{initial.method}{character keyword defining whether the function
   \code{\link[robustbase]{lmrob}} or \code{\link[quantreg]{rq}} is used to
   compute robust initial estimates of the regression parameters
-  \eqn{\mbox{\boldmath$\beta$\unboldmath}}{\beta} (default
-  \code{"lmrob"}).}
+  \eqn{\mbox{\boldmath$\beta$\unboldmath}}{\beta} (default \code{"lmrob"}).
+  If the fixed effects model matrix has not full columns rank, then
+  \code{\link[stats]{lm}} is used to compute initial values of the
+  regression coefficients.  Note that this requires robust estimation.}
   
   \item{bhat}{initial values for the spatial random effects
   \eqn{\widehat{\mbox{\boldmath$B$\unboldmath}}}{hatB}, with
@@ -171,16 +173,16 @@ optim.control(optim.method = c("BFGS", "Nelder-Mead", "CG",
   \eqn{\widehat{\mbox{\boldmath$\beta$\unboldmath}}}{hat\beta} is returned
   (default \code{FALSE}).}
   
-  \item{cov.delta.bhat}{logical controlling whether the covariances of
+  \item{cov.deltabhat}{logical controlling whether the covariances of
   \eqn{\mbox{\boldmath$B$\unboldmath}-
   \widehat{\mbox{\boldmath$B$\unboldmath}}}{B-hatB} are returned (default \code{TRUE}).}
   
-  \item{full.cov.delta.bhat}{logical controlling whether the full covariance
+  \item{full.cov.deltabhat}{logical controlling whether the full covariance
   matrix (\code{TRUE}) or only the variance vector of
   \eqn{\mbox{\boldmath$B$\unboldmath}-
   \widehat{\mbox{\boldmath$B$\unboldmath}}}{B-hatB} is returned (default \code{TRUE}).}
   
-  \item{cov.delta.bhat.betahat}{logical controlling whether the covariance
+  \item{cov.deltabhat.betahat}{logical controlling whether the covariance
   matrix of \eqn{\mbox{\boldmath$B$\unboldmath}-
   \widehat{\mbox{\boldmath$B$\unboldmath}}}{B-hatB} and
   \eqn{\widehat{\mbox{\boldmath$\beta$\unboldmath}}}{hat\beta} is returned

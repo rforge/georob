@@ -76,16 +76,15 @@ export(
 ##   compute.covariances,
 ##   compute.estimating.equations,
 ##   compute.semivariance,
-##   compute.U,
 ##   dcorr.dparam,
-##   estimate.betahat.bhat,
+##   estimate.xihat,
 ##   gcr,
 ##   georob.fit,
 ##   getCall.georob,
 ##   gradient.negative.restricted.loglikelihood,
 ##   negative.restr.loglikelihood,
 ##   prepare.likelihood.calculations,
-##   update.betahat.bhat
+##   update.xihat
 
 S3method( deviance, georob  )
 S3method( fixed.effects, georob  )
