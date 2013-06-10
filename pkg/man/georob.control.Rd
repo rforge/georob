@@ -32,8 +32,8 @@ georob.control(initial.method = c("lmrob", "rq", "lm"), bhat = NULL,
     force.gradient = FALSE, zero.dist = sqrt(.Machine$double.eps),
     cov.bhat = FALSE, full.cov.bhat = FALSE, cov.betahat = TRUE, 
     cov.bhat.betahat = FALSE, 
-    cov.deltabhat = TRUE, full.cov.deltabhat = TRUE,
-    cov.deltabhat.betahat = TRUE,
+    cov.delta.bhat = TRUE, full.cov.delta.bhat = TRUE,
+    cov.delta.bhat.betahat = TRUE,
     cov.ehat = TRUE, full.cov.ehat = FALSE,
     cov.ehat.p.bhat = FALSE, full.cov.ehat.p.bhat = FALSE,
     aux.cov.pred.target = FALSE, min.condnum = 1.e-12,
@@ -173,16 +173,16 @@ optim.control(optim.method = c("BFGS", "Nelder-Mead", "CG",
   \eqn{\widehat{\mbox{\boldmath$\beta$\unboldmath}}}{hat\beta} is returned
   (default \code{FALSE}).}
   
-  \item{cov.deltabhat}{logical controlling whether the covariances of
+  \item{cov.delta.bhat}{logical controlling whether the covariances of
   \eqn{\mbox{\boldmath$B$\unboldmath}-
   \widehat{\mbox{\boldmath$B$\unboldmath}}}{B-hatB} are returned (default \code{TRUE}).}
   
-  \item{full.cov.deltabhat}{logical controlling whether the full covariance
+  \item{full.cov.delta.bhat}{logical controlling whether the full covariance
   matrix (\code{TRUE}) or only the variance vector of
   \eqn{\mbox{\boldmath$B$\unboldmath}-
   \widehat{\mbox{\boldmath$B$\unboldmath}}}{B-hatB} is returned (default \code{TRUE}).}
   
-  \item{cov.deltabhat.betahat}{logical controlling whether the covariance
+  \item{cov.delta.bhat.betahat}{logical controlling whether the covariance
   matrix of \eqn{\mbox{\boldmath$B$\unboldmath}-
   \widehat{\mbox{\boldmath$B$\unboldmath}}}{B-hatB} and
   \eqn{\widehat{\mbox{\boldmath$\beta$\unboldmath}}}{hat\beta} is returned

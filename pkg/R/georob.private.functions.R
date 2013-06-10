@@ -16,8 +16,8 @@ compute.covariances <-
     cov.bhat, full.cov.bhat,
     cov.betahat, 
     cov.bhat.betahat,
-    cov.deltabhat, full.cov.deltabhat,
-    cov.deltabhat.betahat,
+    cov.delta.bhat, full.cov.delta.bhat,
+    cov.delta.bhat.betahat,
     cov.ehat, full.cov.ehat,
     cov.ehat.p.bhat, full.cov.ehat.p.bhat,
     aux.cov.pred.target,
@@ -58,20 +58,20 @@ compute.covariances <-
   cov.betahat.b    <- FALSE
   cov.betahat.e    <- FALSE
   
-  if( any( c( cov.deltabhat, aux.cov.pred.target )))                          cov.bhat.b <- TRUE
+  if( any( c( cov.delta.bhat, aux.cov.pred.target )))                          cov.bhat.b <- TRUE
   if( any( c( cov.ehat, aux.cov.pred.target )))                               cov.bhat.e <- TRUE
-  if( any( c( cov.deltabhat.betahat, cov.ehat.p.bhat, aux.cov.pred.target ))) cov.betahat.b <- TRUE
+  if( any( c( cov.delta.bhat.betahat, cov.ehat.p.bhat, aux.cov.pred.target ))) cov.betahat.b <- TRUE
   if( any( c( cov.ehat, cov.ehat.p.bhat, aux.cov.pred.target )))              cov.betahat.e <- TRUE
   if( any( c( cov.ehat, cov.ehat.p.bhat ) ) )                             cov.betahat <- TRUE
-  if( any( c( cov.deltabhat, cov.deltabhat.betahat ))){
+  if( any( c( cov.delta.bhat, cov.delta.bhat.betahat ))){
                                                                           cov.bhat <- TRUE
-    if( full.cov.deltabhat )                                              full.cov.bhat <- TRUE
+    if( full.cov.delta.bhat )                                              full.cov.bhat <- TRUE
   }
-  if( cov.deltabhat.betahat )                                             cov.bhat.betahat <- TRUE
+  if( cov.delta.bhat.betahat )                                             cov.bhat.betahat <- TRUE
   if( cov.ehat ){
-                                                                          cov.deltabhat.betahat <- TRUE
-                                                                          cov.deltabhat <- TRUE
-    if( full.cov.ehat )                                                   full.cov.deltabhat <- TRUE
+                                                                          cov.delta.bhat.betahat <- TRUE
+                                                                          cov.delta.bhat <- TRUE
+    if( full.cov.ehat )                                                   full.cov.delta.bhat <- TRUE
   }
   
   ## compute required auxiliary items 
@@ -169,8 +169,8 @@ compute.covariances <-
   
   ## ... of (b - bhat) (debugging status ok)
   
-  if( cov.deltabhat ){
-    result.new$cov.deltabhat <- if( full.cov.deltabhat )
+  if( cov.delta.bhat ){
+    result.new$cov.delta.bhat <- if( full.cov.delta.bhat )
     {
       aux <- V + result.new$cov.bhat - cov.bhat.b - t( cov.bhat.b )
       attr( aux, "struc" ) <- "sym"
@@ -189,18 +189,18 @@ compute.covariances <-
   
   ## ... of (b - bhat) and betahat (debugging status ok)
   
-  if( cov.deltabhat.betahat ){
-    result.new$cov.deltabhat.betahat <- t( cov.betahat.b ) - result.new$cov.bhat.betahat
-    dimnames( result.new$cov.deltabhat.betahat ) <- dimnames( XX )
+  if( cov.delta.bhat.betahat ){
+    result.new$cov.delta.bhat.betahat <- t( cov.betahat.b ) - result.new$cov.bhat.betahat
+    dimnames( result.new$cov.delta.bhat.betahat ) <- dimnames( XX )
   }
   
   ## ... of ehat (debugging status ok)
  
   if( cov.ehat ){
-    aux1 <- tcrossprod( result.new$cov.deltabhat.betahat, XX )[TT,TT]
+    aux1 <- tcrossprod( result.new$cov.delta.bhat.betahat, XX )[TT,TT]
     result.new$cov.ehat <- if( full.cov.ehat )
     {
-      aux <- bla <- result.new$cov.deltabhat[TT,TT] + 
+      aux <- bla <- result.new$cov.delta.bhat[TT,TT] + 
         tcrossprod( tcrossprod( XX, result.new$cov.betahat ), XX )[TT,TT] -
         aux1 - t(aux1) - cov.bhat.e[TT,] - t(cov.bhat.e)[,TT] - 
         TX.cov.betahat.e - t(TX.cov.betahat.e)
@@ -209,10 +209,10 @@ compute.covariances <-
       dimnames( aux ) <- list( names.yy, names.yy )
       aux   
     } else {
-      aux <- (if( full.cov.deltabhat ){
-        diag( result.new$cov.deltabhat )[TT] 
+      aux <- (if( full.cov.delta.bhat ){
+        diag( result.new$cov.delta.bhat )[TT] 
       } else {
-        result.new$cov.deltabhat[TT]
+        result.new$cov.delta.bhat[TT]
       }) + rowSums( XX * (XX %*% result.new$cov.betahat) )[TT] -
         2 * diag( aux1 ) - 2 * diag( cov.bhat.e[TT,] ) - 2 * diag( TX.cov.betahat.e ) + 
         nugget
@@ -502,20 +502,20 @@ compute.covariances <-
   ##   
   ##   ##  ... of delta.z = (z - bhat)  (debugging status: ok)
   ##   
-  ##   if( cov.deltabhat ){
+  ##   if( cov.delta.bhat ){
   ##     
-  ##     if( full.cov.deltabhat ){
+  ##     if( full.cov.delta.bhat ){
   ##       
   ##       ##  full matrix
   ##       
-  ##       result$cov.deltabhat <- nugget * ( 
+  ##       result$cov.delta.bhat <- nugget * ( 
   ##         M.inverse[sel, sel] %*% ValphaiP / eta +
   ##         crossprod( sqrtD * PpXQt )
   ##       )
-  ##       dimnames( result$cov.deltabhat ) <- list(
+  ##       dimnames( result$cov.delta.bhat ) <- list(
   ##         rownames( XX ), rownames( XX )
   ##       )
-  ##       attr( result$cov.deltabhat, "struc" ) <- "sym"
+  ##       attr( result$cov.delta.bhat, "struc" ) <- "sym"
   ##       
   ##       ##       ##  zur Kontrolle: Kovarianzmatrix UK-Vorhersagefehler
   ##       ##       
@@ -523,26 +523,26 @@ compute.covariances <-
   ##       ##       t.Sigma <- t.V + nugget * diag( n )
   ##       ##       t.iSigma <- solve( t.Sigma )
   ##       ##       
-  ##       ##       t.cov.deltabhat <- t.V - t.V %*% t.iSigma %*% t.V + t.V %*% t.iSigma %*% XX %*% solve( 
+  ##       ##       t.cov.delta.bhat <- t.V - t.V %*% t.iSigma %*% t.V + t.V %*% t.iSigma %*% XX %*% solve( 
   ##       ##         t( XX ) %*% t.iSigma %*% XX 
   ##       ##       ) %*% t(XX) %*% t.iSigma %*% t.V
   ##       ##       
-  ##       ##       print( summary( c( result$cov.deltabhat - t.cov.deltabhat ) ) )
+  ##       ##       print( summary( c( result$cov.delta.bhat - t.cov.delta.bhat ) ) )
   ##       
   ##     } else {
   ##       
   ##       ##  diagonal elements only 
   ##       
-  ##       result$cov.deltabhat <- nugget * (
+  ##       result$cov.delta.bhat <- nugget * (
   ##         colSums( 
   ##           drop( 
   ##             Valpha.objects$Valpha.ilcf %*% M.inverse[sel, sel] 
   ##           )^2
   ##         ) / eta + colSums( (sqrtD * PpXQt)^2 )
   ##       )
-  ##       names( result$cov.deltabhat ) <- rownames( XX )
+  ##       names( result$cov.delta.bhat ) <- rownames( XX )
   ##       
-  ##       ##       print( summary( c( result$cov.deltabhat - diag( t.cov.deltabhat ) ) ) )
+  ##       ##       print( summary( c( result$cov.delta.bhat - diag( t.cov.delta.bhat ) ) ) )
   ##   
   ##     }
   ##     
@@ -551,9 +551,9 @@ compute.covariances <-
   ##   
   ##   ##  ... of delta.z = (z - bhat) and betahat (debugging status: ok)
   ##   
-  ##   if( cov.deltabhat.betahat ){
+  ##   if( cov.delta.bhat.betahat ){
   ##     
-  ##     result$cov.deltabhat.betahat <- -nugget * (
+  ##     result$cov.delta.bhat.betahat <- -nugget * (
   ##       t(ValphaiP) %*% M.inverse[sel,-sel] / eta +
   ##       crossprod( PpXQt, TtDT * QpXS )
   ##     )
@@ -564,11 +564,11 @@ compute.covariances <-
   ##     ##     t.Sigma <- t.V + nugget * diag( n )
   ##     ##     t.iSigma <- solve( t.Sigma )
   ##     ##     
-  ##     ##     t.cov.deltabhat.betahat <- t.V %*% t.iSigma %*% XX %*% solve( 
+  ##     ##     t.cov.delta.bhat.betahat <- t.V %*% t.iSigma %*% XX %*% solve( 
   ##     ##         t( XX ) %*% t.iSigma %*% XX
   ##     ##     )
   ##     ##     
-  ##     ##     print( summary( c( result$cov.deltabhat.betahat - t.cov.deltabhat.betahat ) ) )
+  ##     ##     print( summary( c( result$cov.delta.bhat.betahat - t.cov.delta.bhat.betahat ) ) )
   ##     
   ##   }
   ##   
@@ -2454,8 +2454,8 @@ compute.estimating.equations <-
       cov.bhat = TRUE, full.cov.bhat = TRUE,
       cov.betahat = FALSE,
       cov.bhat.betahat = FALSE,
-      cov.deltabhat = FALSE, full.cov.deltabhat = FALSE,
-      cov.deltabhat.betahat = FALSE,
+      cov.delta.bhat = FALSE, full.cov.delta.bhat = FALSE,
+      cov.delta.bhat.betahat = FALSE,
       cov.ehat = FALSE, full.cov.ehat = FALSE,
       cov.ehat.p.bhat = FALSE, full.cov.ehat.p.bhat = FALSE,
       aux.cov.pred.target = FALSE,
@@ -3183,8 +3183,8 @@ georob.fit <-
     cov.bhat, full.cov.bhat,
     cov.betahat, 
     cov.bhat.betahat,
-    cov.deltabhat, full.cov.deltabhat,
-    cov.deltabhat.betahat,
+    cov.delta.bhat, full.cov.delta.bhat,
+    cov.delta.bhat.betahat,
     cov.ehat, full.cov.ehat,
     cov.ehat.p.bhat, full.cov.ehat.p.bhat,
     aux.cov.pred.target,
@@ -4020,7 +4020,7 @@ georob.fit <-
   
   if( any( c( 
         cov.bhat, cov.betahat, cov.bhat.betahat, 
-        cov.deltabhat, cov.deltabhat.betahat, 
+        cov.delta.bhat, cov.delta.bhat.betahat, 
         cov.ehat, cov.ehat.p.bhat,
         aux.cov.pred.target
       ) 
@@ -4041,8 +4041,8 @@ georob.fit <-
       cov.bhat = cov.bhat, full.cov.bhat = full.cov.bhat,
       cov.betahat = cov.betahat, 
       cov.bhat.betahat = cov.bhat.betahat,
-      cov.deltabhat = cov.deltabhat, full.cov.deltabhat = full.cov.deltabhat,
-      cov.deltabhat.betahat = cov.deltabhat.betahat,
+      cov.delta.bhat = cov.delta.bhat, full.cov.delta.bhat = full.cov.delta.bhat,
+      cov.delta.bhat.betahat = cov.delta.bhat.betahat,
       cov.ehat = cov.ehat, full.cov.ehat = full.cov.ehat, 
       cov.ehat.p.bhat = cov.ehat.p.bhat, full.cov.ehat.p.bhat = full.cov.ehat.p.bhat,
       aux.cov.pred.target = aux.cov.pred.target,
@@ -4087,7 +4087,7 @@ georob.fit <-
   
   if( any( c( 
         cov.bhat, cov.betahat, cov.bhat.betahat, 
-        cov.deltabhat, cov.deltabhat.betahat, 
+        cov.delta.bhat, cov.delta.bhat.betahat, 
         cov.ehat, cov.ehat.p.bhat, aux.cov.pred.target
       ) 
     ) 

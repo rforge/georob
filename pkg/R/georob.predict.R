@@ -93,7 +93,7 @@ function(
       locations.coords, betahat, bhat,
       pred.X, pred.coords, newdata,
       variogram.model, param, aniso,
-      cov.deltabhat.betahat.l, cov.betahat.l, cov.bhat.betahat, cov.p.t, Valpha.objects,
+      cov.delta.bhat.betahat.l, cov.betahat.l, cov.bhat.betahat, cov.p.t, Valpha.objects,
       pwidth, pheight, napp,
       signif,
       extended.output, full.covmat
@@ -385,8 +385,8 @@ function(
         ## compute uk variance (= (co-)variance of prediction errors)
         
         aux <- cbind(
-          gammaValphai %*% cov.deltabhat.betahat.l[1:n, 1:n] - pred.X[!ex, , drop = FALSE ] %*% cov.deltabhat.betahat.l[-(1:n), 1:n],
-          - pred.X[!ex, , drop = FALSE ] %*% cov.deltabhat.betahat.l[-(1:n), -(1:n)]
+          gammaValphai %*% cov.delta.bhat.betahat.l[1:n, 1:n] - pred.X[!ex, , drop = FALSE ] %*% cov.delta.bhat.betahat.l[-(1:n), 1:n],
+          - pred.X[!ex, , drop = FALSE ] %*% cov.delta.bhat.betahat.l[-(1:n), -(1:n)]
         )
         
         if( full.covmat ){
@@ -630,16 +630,16 @@ function(
   ## if needed compute missing covariance matrices
   
   cov.betahat    <- is.null( object[["cov"]][["cov.betahat"]] )
-  cov.deltabhat   <- is.null( object[["cov"]][["cov.deltabhat"]] ) ||
-    !is.matrix( object[["cov"]][["cov.deltabhat"]] )
-  cov.deltabhat.betahat <- is.null( object[["cov"]][["cov.deltabhat.betahat"]] )
+  cov.delta.bhat   <- is.null( object[["cov"]][["cov.delta.bhat"]] ) ||
+    !is.matrix( object[["cov"]][["cov.delta.bhat"]] )
+  cov.delta.bhat.betahat <- is.null( object[["cov"]][["cov.delta.bhat.betahat"]] )
   cov.bhat    <- extended.output & (
     is.null( object[["cov"]]$cov.bhat ) || !is.matrix( object[["cov"]]$cov.bhat )
   )
   cov.bhat.betahat  <-  extended.output & is.null( object[["cov"]]$cov.bhat.betahat )
   cov.p.t  <-  extended.output & is.null( object[["cov"]]$aux.cov.pred.target )
   
-  if( any( c( cov.betahat, cov.deltabhat, cov.deltabhat.betahat, 
+  if( any( c( cov.betahat, cov.delta.bhat, cov.delta.bhat.betahat, 
         extended.output & ( cov.bhat || cov.bhat.betahat || cov.p.t )
       )
     )
@@ -676,8 +676,8 @@ function(
       cov.bhat = cov.bhat, full.cov.bhat = cov.bhat,
       cov.betahat = cov.betahat, 
       cov.bhat.betahat = cov.bhat.betahat,
-      cov.deltabhat = cov.deltabhat, full.cov.deltabhat = cov.deltabhat,
-      cov.deltabhat.betahat = cov.deltabhat.betahat,
+      cov.delta.bhat = cov.delta.bhat, full.cov.delta.bhat = cov.delta.bhat,
+      cov.delta.bhat.betahat = cov.delta.bhat.betahat,
       cov.ehat = FALSE, full.cov.ehat = FALSE,
       cov.ehat.p.bhat = FALSE, full.cov.ehat.p.bhat = FALSE,
       aux.cov.pred.target = cov.p.t,
@@ -691,9 +691,9 @@ function(
     if( is.null( object[["cov"]] ) ) object[["cov"]] <- list()
     
     if( cov.betahat )    object[["cov"]][["cov.betahat"]]    <- r.cov[["cov.betahat"]]
-    if( cov.deltabhat )   object[["cov"]][["cov.delta"]] <- r.cov[["cov.delta"]]
-    if( cov.deltabhat.betahat ) object[["cov"]][["cov.deltabhat.betahat"]] <- 
-      r.cov[["cov.deltabhat.betahat"]]
+    if( cov.delta.bhat )   object[["cov"]][["cov.delta.bhat"]] <- r.cov[["cov.delta.bhat"]]
+    if( cov.delta.bhat.betahat ) object[["cov"]][["cov.delta.bhat.betahat"]] <- 
+      r.cov[["cov.delta.bhat.betahat"]]
     if( extended.output && cov.bhat )   object[["cov"]][["cov.bhat"]] <- r.cov[["cov.bhat"]]
     if( extended.output && cov.bhat.betahat ) object[["cov"]][["cov.bhat.betahat"]] <- 
       r.cov[["cov.bhat.betahat"]]
@@ -704,24 +704,23 @@ function(
   
   ## compute lower cholesky factor of covariance matrix of delta = (b -
   ## bhat) and betahat - beta
-  
-  cov.deltabhat.betahat.l <- try( 
+  cov.delta.bhat.betahat.l <- try( 
     t(
       chol(
         rbind(
           cbind( 
-            object[["cov"]][["cov.delta"]], 
-            object[["cov"]][["cov.deltabhat.betahat"]] 
+            object[["cov"]][["cov.delta.bhat"]], 
+            object[["cov"]][["cov.delta.bhat.betahat"]] 
           ),
           cbind( 
-            t( object[["cov"]][["cov.deltabhat.betahat"]] ), 
+            t( object[["cov"]][["cov.delta.bhat.betahat"]] ), 
             object[["cov"]][["cov.betahat"]]
           )
         )
       )
     ), silent = TRUE
   )
-  if( identical( class( cov.deltabhat.betahat.l ), "try-error" ) ) stop(
+  if( identical( class( cov.delta.bhat.betahat.l ), "try-error" ) ) stop(
     "covariance matrix of kriging errors 'b-bhat' and 'betahat' not positive definite"  
   )
   
@@ -890,8 +889,8 @@ function(
         },
         signal = {    ## signal
           aux <- cbind( 
-            cov.deltabhat.betahat.l[1:n,1:n] - X %*% cov.deltabhat.betahat.l[-(1:n),1:n],
-            - X  %*% cov.deltabhat.betahat.l[-(1:n),-(1:n)]
+            cov.delta.bhat.betahat.l[1:n,1:n] - X %*% cov.delta.bhat.betahat.l[-(1:n),1:n],
+            - X  %*% cov.delta.bhat.betahat.l[-(1:n),-(1:n)]
           )
           aux <- aux[object[["Tmat"]], , drop = FALSE]
           if( full.covmat ){
@@ -1137,7 +1136,7 @@ function(
       locations.coords, betahat, bhat,
       pred.X, pred.coords, newdata, 
       variogram.model, param, aniso,
-      cov.deltabhat.betahat.l, cov.betahat.l, cov.bhat.betahat, cov.p.t, Valpha.objects,
+      cov.delta.bhat.betahat.l, cov.betahat.l, cov.bhat.betahat, cov.p.t, Valpha.objects,
       pwidth, pheight, napp,
       signif,
       extended.output, full.covmat,
@@ -1164,7 +1163,7 @@ function(
         bhat = bhat,
         pred.X = pred.X, pred.coords = pred.coords, newdata = newdata,
         variogram.model = variogram.model, param = param, aniso = aniso,
-        cov.deltabhat.betahat.l = cov.deltabhat.betahat.l,
+        cov.delta.bhat.betahat.l = cov.delta.bhat.betahat.l,
         cov.betahat.l = cov.betahat.l, 
         cov.bhat.betahat = cov.bhat.betahat,
         cov.p.t = cov.p.t,
@@ -1205,7 +1204,7 @@ function(
           variogram.model = object[["variogram.model"]],
           param = object[["param"]],
           aniso = object[["aniso"]],
-          cov.deltabhat.betahat.l = cov.deltabhat.betahat.l,
+          cov.delta.bhat.betahat.l = cov.delta.bhat.betahat.l,
           cov.betahat.l = cov.betahat.l,
           cov.bhat.betahat = cov.bhat.betahat,
           cov.p.t = cov.p.t,
@@ -1235,7 +1234,7 @@ function(
           variogram.model = object[["variogram.model"]],
           param = object[["param"]],
           aniso = object[["aniso"]],
-          cov.deltabhat.betahat.l = cov.deltabhat.betahat.l,
+          cov.delta.bhat.betahat.l = cov.delta.bhat.betahat.l,
           cov.betahat.l = cov.betahat.l,
           cov.bhat.betahat = cov.bhat.betahat,
           cov.p.t = cov.p.t,
@@ -1264,7 +1263,7 @@ function(
         variogram.model = object[["variogram.model"]],
         param = object[["param"]],
         aniso = object[["aniso"]],
-        cov.deltabhat.betahat.l = cov.deltabhat.betahat.l,
+        cov.delta.bhat.betahat.l = cov.delta.bhat.betahat.l,
         cov.betahat.l = cov.betahat.l,
         cov.bhat.betahat = cov.bhat.betahat,
         cov.p.t = cov.p.t,

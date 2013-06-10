@@ -125,10 +125,10 @@
       \eqn{\widehat{\mbox{\boldmath$B$\unboldmath}}}{hatB} and
       \eqn{\widehat{\mbox{\boldmath$\beta$\unboldmath}}}{hat\beta}.
       
-      \item \code{cov.deltabhat}: the covariances of 
+      \item \code{cov.delta.bhat}: the covariances of 
       \eqn{\mbox{\boldmath$B$\unboldmath}- \widehat{\mbox{\boldmath$B$\unboldmath}}}{B-hatB}.
       
-      \item \code{cov.deltabhat.betahat}: the covariances of 
+      \item \code{cov.delta.bhat.betahat}: the covariances of 
       \eqn{\mbox{\boldmath$B$\unboldmath}- \widehat{\mbox{\boldmath$B$\unboldmath}}}{B-hatB}
       and 
       \eqn{\widehat{\mbox{\boldmath$\beta$\unboldmath}}}{hat\beta}.

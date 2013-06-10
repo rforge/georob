@@ -368,9 +368,9 @@ georob <-
       cov.bhat = control$cov.bhat, full.cov.bhat = control$full.cov.bhat,
       cov.betahat = control$cov.betahat, 
       cov.bhat.betahat = control$cov.bhat.betahat,
-      cov.deltabhat = control$cov.deltabhat,
-      full.cov.deltabhat = control$full.cov.deltabhat,
-      cov.deltabhat.betahat = control$cov.deltabhat.betahat,
+      cov.delta.bhat = control$cov.delta.bhat,
+      full.cov.delta.bhat = control$full.cov.delta.bhat,
+      cov.delta.bhat.betahat = control$cov.delta.bhat.betahat,
       cov.ehat = control$cov.ehat, full.cov.ehat = control$full.cov.ehat,
       cov.ehat.p.bhat = control$cov.ehat.p.bhat, full.cov.ehat.p.bhat = control$full.cov.ehat.p.bhat,
       aux.cov.pred.target = control$aux.cov.pred.target,
@@ -433,9 +433,9 @@ georob <-
     cov.bhat = control$cov.bhat, full.cov.bhat = control$full.cov.bhat,
     cov.betahat = control$cov.betahat, 
     cov.bhat.betahat = control$cov.bhat.betahat,
-    cov.deltabhat = control$cov.deltabhat,
-    full.cov.deltabhat = control$full.cov.deltabhat,
-    cov.deltabhat.betahat = control$cov.deltabhat.betahat,
+    cov.delta.bhat = control$cov.delta.bhat,
+    full.cov.delta.bhat = control$full.cov.delta.bhat,
+    cov.delta.bhat.betahat = control$cov.delta.bhat.betahat,
     cov.ehat = control$cov.ehat, full.cov.ehat = control$full.cov.ehat,
     cov.ehat.p.bhat = control$cov.ehat.p.bhat, full.cov.ehat.p.bhat = control$full.cov.ehat.p.bhat,
     aux.cov.pred.target = control$aux.cov.pred.target,
@@ -520,8 +520,8 @@ georob.control <-
     cov.bhat = FALSE, full.cov.bhat = FALSE,
     cov.betahat = TRUE, 
     cov.bhat.betahat = FALSE,
-    cov.deltabhat = TRUE, full.cov.deltabhat = TRUE,
-    cov.deltabhat.betahat = TRUE,
+    cov.delta.bhat = TRUE, full.cov.delta.bhat = TRUE,
+    cov.delta.bhat.betahat = TRUE,
     cov.ehat = TRUE, full.cov.ehat = FALSE,
     cov.ehat.p.bhat = FALSE, full.cov.ehat.p.bhat = FALSE,
     aux.cov.pred.target = FALSE,
@@ -569,10 +569,10 @@ georob.control <-
   ##                   should be computed
   ## cov.bhat.betahat  logical, flag controlling whether the covariance matrix of 
   ##                   bhat and betahat should be computed
-  ## cov.deltabhat      logical, flag controlling whether the covariances of z-bhat should be computed
-  ## full.cov.deltabhat logical, flag controlling whether the full covariance matrix of z-bhat 
+  ## cov.delta.bhat      logical, flag controlling whether the covariances of z-bhat should be computed
+  ## full.cov.delta.bhat logical, flag controlling whether the full covariance matrix of z-bhat 
   ##                   is computed (TRUE) or only the diagonal elements (FALSE)
-  ## cov.deltabhat.betahat    logical, flag controlling whether the covariance matrix of z-bhat
+  ## cov.delta.bhat.betahat    logical, flag controlling whether the covariance matrix of z-bhat
   ##                    and betahat should be computed
   ## cov.ehat        logical, flag controlling whether the covariances of the resdiuals should be computed
   ## full.cov.ehat   logical, flag controlling whether the full covariance matrix of the residuals 
@@ -621,8 +621,8 @@ georob.control <-
     cov.bhat = cov.bhat, full.cov.bhat = full.cov.bhat,
     cov.betahat = cov.betahat, 
     cov.bhat.betahat = cov.bhat.betahat,
-    cov.deltabhat = cov.deltabhat, full.cov.deltabhat = full.cov.deltabhat,
-    cov.deltabhat.betahat = cov.deltabhat.betahat,
+    cov.delta.bhat = cov.delta.bhat, full.cov.delta.bhat = full.cov.delta.bhat,
+    cov.delta.bhat.betahat = cov.delta.bhat.betahat,
     cov.ehat = cov.ehat, full.cov.ehat = full.cov.ehat,
     cov.ehat.p.bhat = cov.ehat.p.bhat, full.cov.ehat.p.bhat = full.cov.ehat.p.bhat,
     aux.cov.pred.target = aux.cov.pred.target,
