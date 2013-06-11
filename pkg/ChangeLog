@@ -85,8 +85,13 @@ processing col and pch arguments
 
 2013-06-06  Andreas Papritz  <papritz@env.ethz.ch>
 
-* georob.exported.function.R (georob, georob.control): handling fixed effects model matrices with rank < ncol(x)
-* georob.private.function.R (prepare.likelihood.calculations, compute.estimating.equations, negative.restr.loglikelihood, negative.restr.loglikelihood, gradient.negative.restricted.loglikelihood, georob.fit) : solving estimating equations for xi
+* georob.exported.function.R (georob, georob.control): handling fixed effects model matrices with rank < ncol(x) for robust estimation
+* georob.private.function.R (prepare.likelihood.calculations, compute.estimating.equations, negative.restr.loglikelihood, gradient.negative.restricted.loglikelihood, georob.fit) : solving estimating equations for xi
 * georob.S3methods.R ranef.georob, rstandard.georob) : solving estimating equations for xi
-* georob.private.function.R (compute.covariances, estimate.xihat, update.xihat, negative.restr.loglikelihood): solving estimating equations for xi
+* georob.private.function.R (estimate.xihat, prepare.likelihood.calculations, compute.estimating.equations, negative.restr.loglikelihood, gradient.negative.restricted.loglikelihood, georob.fit): handling fixed effects model matrices with rank < ncol(x) for robust estimation
 
+
+2013-06-11  Andreas Papritz  <papritz@env.ethz.ch>
+
+* georob.exported.function.R (georob): handling fixed effects model matrices with rank < ncol(x) for non-robust estimation
+* georob.private.function.R (estimate.xihat, prepare.likelihood.calculations, compute.estimating.equations, negative.restr.loglikelihood, gradient.negative.restricted.loglikelihood, georob.fit): handling fixed effects model matrices with rank < ncol(x) for non-robust estimation

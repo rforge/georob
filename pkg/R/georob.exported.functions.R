@@ -175,22 +175,22 @@ georob <-
   
   ## check whether design matrix has full column rank
   
+  rankdef.x <- FALSE
+  
   min.max.sv <- range( svd( crossprod( x ) )$d )
   condnum <- min.max.sv[1] / min.max.sv[2] 
   
   if( condnum <= control$min.condnum ){
-    if( initial.param || tuning.psi >= control$tuning.psi.nr ) stop(
-      "singular fixed effects design matrices cannot be handled if 'initial.param = TRUE'",
-      "or for Gaussian REML estimation"
-    )
+    rankdef.x <- TRUE
     cat( 
       "design matrix has not full column rank (condition number of X^T X: ", 
-      signif( condnum, 2 ), ")\ninitial values of regression coefficients are computed by 'lm\n\n'"
+      signif( condnum, 2 ), ")\ninitial values of fixed effects coefficients are computed by 'lm'\n\n"
     )
     control$initial.method <- "lm"
+    initial.param <- FALSE
     warning( 
       "design matrix has not full column rank (condition number of X^T X: ", 
-      signif( condnum, 2 ), ")\ninitial values of regression coefficients are computed by 'lm'"
+      signif( condnum, 2 ), ")\ninitial values of fixed effects coefficients are computed by 'lm'"
     )
   }
   
@@ -375,6 +375,7 @@ georob <-
       cov.ehat.p.bhat = control$cov.ehat.p.bhat, full.cov.ehat.p.bhat = control$full.cov.ehat.p.bhat,
       aux.cov.pred.target = control$aux.cov.pred.target,
       min.condnum = control$min.condnum,
+      rankdef.x = rankdef.x,
       psi.func = control$psi.func,
       tuning.psi.nr = control$tuning.psi.nr,
       irwls.initial = control$irwls.initial,
@@ -440,6 +441,7 @@ georob <-
     cov.ehat.p.bhat = control$cov.ehat.p.bhat, full.cov.ehat.p.bhat = control$full.cov.ehat.p.bhat,
     aux.cov.pred.target = control$aux.cov.pred.target,
     min.condnum = control$min.condnum,
+    rankdef.x = rankdef.x,
     psi.func = control$psi.func,
     tuning.psi.nr = control$tuning.psi.nr,
     irwls.initial = control$irwls.initial,

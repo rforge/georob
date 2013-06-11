@@ -798,7 +798,7 @@ update.xihat <-
 
 estimate.xihat <- 
   function(
-    XX, min.condnum, yy, betahat, TT, xihat, 
+    XX, min.condnum, rankdef.x, yy, betahat, TT, xihat, 
     psi.function, tuning.psi, tuning.psi.nr, 
     maxit, reltol,
     nugget, eta, Valpha.inverse,
@@ -834,15 +834,23 @@ estimate.xihat <-
   
   ##  compute projection matrix Palpha and related items
   
-#   browser()
-#   
   result <- list( error = FALSE )
   
   aux <- t( XX ) %*% Valpha.inverse
   
-  s <- svd( aux %*% XX )
-  s$d <- ifelse( s$d / max( s$d ) <= min.condnum, 0., 1. / s$d )
-  Palpha <- s$v %*% ( s$d * t( s$u ) )
+  if( rankdef.x ){
+    s <- svd( aux %*% XX )
+    s$d <- ifelse( s$d / max( s$d ) <= min.condnum, 0., 1. / s$d )
+    Palpha <- s$v %*% ( s$d * t( s$u ) )                # Moore-Penrose inverse
+  } else {
+    t.chol <- try( chol( aux %*% XX ), silent = TRUE )
+    if( !identical( class( t.chol ), "try-error" ) ){
+      Palpha <- chol2inv( t.chol )    
+    } else {
+      result$error <- TRUE
+      return( result )    
+    }
+  }
   
   result$Aalpha             <- Palpha %*% aux
   dimnames( result$Aalpha ) <- dimnames( t(XX) )
@@ -1055,7 +1063,7 @@ prepare.likelihood.calculations <-
     adjustable.param, variogram.model, fixed.param, param.name, aniso.name,
     param.tf, bwd.tf, safe.param,
     lag.vectors,
-    XX, min.condnum, yy, betahat, TT, bhat, 
+    XX, min.condnum, rankdef.x, yy, betahat, TT, bhat, 
     psi.function, dpsi.function, tuning.psi, tuning.psi.nr, 
     irwls.initial, irwls.maxiter, irwls.reltol,
     compute.Q,
@@ -1282,7 +1290,7 @@ prepare.likelihood.calculations <-
     }
     
     lik.item$effects <- estimate.xihat( 
-      XX, min.condnum, yy, betahat, TT, bhat, 
+      XX, min.condnum, rankdef.x, yy, betahat, TT, bhat, 
       psi.function, tuning.psi, tuning.psi.nr, 
       irwls.maxiter, irwls.reltol,
       lik.item$param["nugget"], lik.item$eta, lik.item$Valpha$Valpha.inverse,
@@ -1318,26 +1326,37 @@ prepare.likelihood.calculations <-
       Q <- rbind( 
         cbind( aux,      TtDTX                 ),
         cbind( t(TtDTX), crossprod( XX, TtDTX) )
-      )
+      ) / lik.item$param["nugget"]
       
       lik.item$Q <- list( error = TRUE )
       
-      ##  compute log(det(Q)) and inverse of Q by cholesky decomposition
-      
-      t.chol <- try( 
-        chol( Q / lik.item$param["nugget"] ), 
-        silent = TRUE
-      )
-      
-      if( !identical( class( t.chol ), "try-error" ) ) {
+      if( rankdef.x ){
+        
+        ## compute log(pseudo.det(Q)) and (Moore-Penrose) pseudo inverse of Q by svd
         
         lik.item$Q$error <- FALSE
-        lik.item$Q$log.det.Q <- 2 * sum( log( diag( t.chol) ) )
-        lik.item$Q$Q.inverse <- chol2inv( t.chol )
+        s <- svd( Q )
+        lik.item$Q$log.det.Q <- sum( log( s$d[s$d / max( s$d ) > min.condnum] ) )
+        s$d <- ifelse( s$d / max( s$d ) <= min.condnum, 0., 1. / s$d )
+        lik.item$Q$Q.inverse <- s$v %*% ( s$d * t( s$u ) )
         
       } else {
         
-        return( lik.item )
+        ##  compute log(det(Q)) and inverse of Q by cholesky decomposition
+        
+        t.chol <- try( chol( Q ), silent = TRUE )
+        
+        if( !identical( class( t.chol ), "try-error" ) ) {
+          
+          lik.item$Q$error <- FALSE
+          lik.item$Q$log.det.Q <- 2 * sum( log( diag( t.chol) ) )
+          lik.item$Q$Q.inverse <- chol2inv( t.chol )
+          
+        } else {
+          
+          return( lik.item )
+          
+        }
         
       }
       
@@ -2370,7 +2389,7 @@ compute.estimating.equations <-
     variogram.model, fixed.param, param.name, aniso.name,
     param.tf, bwd.tf, safe.param,
     lag.vectors,
-    XX, min.condnum, yy, betahat, TT, bhat, 
+    XX, min.condnum, rankdef.x, yy, betahat, TT, bhat, 
     psi.function, dpsi.function, 
     tuning.psi, tuning.psi.nr,
     irwls.initial, irwls.maxiter, irwls.reltol,
@@ -2397,7 +2416,7 @@ compute.estimating.equations <-
     adjustable.param, variogram.model, fixed.param, param.name, aniso.name,
     param.tf, bwd.tf, safe.param,
     lag.vectors,
-    XX, min.condnum, yy, betahat, TT, bhat, 
+    XX, min.condnum, rankdef.x, yy, betahat, TT, bhat, 
     psi.function, dpsi.function, tuning.psi, tuning.psi.nr,
     irwls.initial, irwls.maxiter, irwls.reltol,
     compute.Q = FALSE,
@@ -2628,7 +2647,7 @@ negative.restr.loglikelihood <-
     variogram.model, fixed.param, param.name, aniso.name,
     param.tf, bwd.tf, safe.param,
     lag.vectors,
-    XX, min.condnum, yy, betahat, TT, bhat, 
+    XX, min.condnum, rankdef.x, yy, betahat, TT, bhat, 
     psi.function, dpsi.function, 
     tuning.psi, tuning.psi.nr, 
     irwls.initial, irwls.maxiter, irwls.reltol,
@@ -2657,7 +2676,7 @@ negative.restr.loglikelihood <-
     adjustable.param, variogram.model, fixed.param, param.name, aniso.name,
     param.tf, bwd.tf, safe.param,
     lag.vectors,
-    XX, min.condnum, yy, betahat, TT, bhat, 
+    XX, min.condnum, rankdef.x, yy, betahat, TT, bhat, 
     psi.function, dpsi.function, tuning.psi, tuning.psi.nr,
     irwls.initial, irwls.maxiter, irwls.reltol,
     compute.Q = TRUE,
@@ -2743,7 +2762,7 @@ gradient.negative.restricted.loglikelihood <-
     variogram.model, fixed.param, param.name, aniso.name,
     param.tf, deriv.fwd.tf, bwd.tf, safe.param,
     lag.vectors,
-    XX, min.condnum, yy, betahat, TT, bhat, 
+    XX, min.condnum, rankdef.x, yy, betahat, TT, bhat, 
     psi.function, dpsi.function, d2psi.function, 
     tuning.psi, tuning.psi.nr,
     irwls.initial, irwls.maxiter, irwls.reltol,
@@ -2773,7 +2792,7 @@ gradient.negative.restricted.loglikelihood <-
     adjustable.param, variogram.model, fixed.param, param.name, aniso.name,
     param.tf, bwd.tf, safe.param,
     lag.vectors,
-    XX, min.condnum, yy, betahat, TT, bhat, 
+    XX, min.condnum, rankdef.x, yy, betahat, TT, bhat, 
     psi.function, dpsi.function, tuning.psi, tuning.psi.nr,
     irwls.initial, irwls.maxiter, irwls.reltol,
     compute.Q = TRUE,
@@ -3188,7 +3207,7 @@ georob.fit <-
     cov.ehat, full.cov.ehat,
     cov.ehat.p.bhat, full.cov.ehat.p.bhat,
     aux.cov.pred.target,
-    min.condnum,
+    min.condnum, rankdef.x,
     psi.func,
     tuning.psi.nr,
     irwls.initial,
@@ -3780,7 +3799,7 @@ georob.fit <-
         bwd.tf = bwd.tf,
         safe.param = safe.param,
         lag.vectors = lag.vectors,
-        XX = XX, min.condnum = min.condnum, 
+        XX = XX, min.condnum = min.condnum, rankdef.x = rankdef.x,
         yy = yy, betahat = betahat, TT = TT, bhat = bhat, 
         psi.function = rho.psi.etc$psi.function, 
         dpsi.function = rho.psi.etc$dpsi.function, 
@@ -3831,7 +3850,7 @@ georob.fit <-
         bwd.tf = bwd.tf,
         safe.param = safe.param,
         lag.vectors = lag.vectors,
-        XX = XX, min.condnum = min.condnum, 
+        XX = XX, min.condnum = min.condnum, rankdef.x = rankdef.x,
         yy = yy, betahat = betahat, TT = TT, bhat = bhat, 
         psi.function = rho.psi.etc$psi.function, 
         dpsi.function = rho.psi.etc$dpsi.function, 
@@ -3885,7 +3904,7 @@ georob.fit <-
         bwd.tf = bwd.tf,
         safe.param = safe.param,
         lag.vectors = lag.vectors,
-        XX = XX, min.condnum = min.condnum, 
+        XX = XX, min.condnum = min.condnum, rankdef.x = rankdef.x,
         yy = yy, betahat = betahat, TT = TT, bhat = bhat, 
         psi.function = rho.psi.etc$psi.function, 
         dpsi.function = rho.psi.etc$dpsi.function, 
@@ -3922,7 +3941,7 @@ georob.fit <-
         bwd.tf = bwd.tf,
         safe.param = safe.param,
         lag.vectors = lag.vectors,
-        XX = XX, min.condnum = min.condnum, 
+        XX = XX, min.condnum = min.condnum, rankdef.x = rankdef.x,
         yy = yy, betahat = betahat, TT = TT, bhat = bhat, 
         psi.function = rho.psi.etc$psi.function, 
         dpsi.function = rho.psi.etc$dpsi.function, 
@@ -3960,7 +3979,7 @@ georob.fit <-
         bwd.tf = bwd.tf,
         safe.param = safe.param,
         lag.vectors = lag.vectors,
-        XX = XX, min.condnum = min.condnum, 
+        XX = XX, min.condnum = min.condnum, rankdef.x = rankdef.x,
         yy = yy, betahat = betahat, TT = TT, bhat = bhat, 
         psi.function = rho.psi.etc$psi.function, 
         dpsi.function = rho.psi.etc$dpsi.function, 
@@ -3990,7 +4009,7 @@ georob.fit <-
         bwd.tf = bwd.tf,
         safe.param = safe.param,
         lag.vectors = lag.vectors,
-        XX = XX, min.condnum = min.condnum, 
+        XX = XX, min.condnum = min.condnum, rankdef.x = rankdef.x,
         yy = yy, betahat = betahat, TT = TT, bhat = bhat, 
         psi.function = rho.psi.etc$psi.function, 
         dpsi.function = rho.psi.etc$dpsi.function, 
