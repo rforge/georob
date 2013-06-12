@@ -29,7 +29,6 @@ georob <-
   
   ## ToDos:
   
-  ## - ...$xy durch ...[["xy"]] ersetzen
   ## - Variante fuer Klasse SpatialPointsDataFrame{sp}
   ## - Ueberpruefung der Konsistenz des Inputs hier statt in georob.fit
   ## - ausgewaehlte Elemente von control in Resultate speichern
@@ -77,6 +76,7 @@ georob <-
   ## 2013-04-23 AP new names for robustness weights
   ## 2013-05-23 AP correct handling of missing observations and to construct model.frame
   ## 2013-06-03 AP handling design matrices with rank < ncol(x)
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   ## check whether input is complete
   
@@ -113,8 +113,8 @@ georob <-
     names(mf), 0L 
   )
   mf <- mf[c(1L, m)]
-  mf$formula <- extended.formula
-  mf$drop.unused.levels <- TRUE
+  mf[["formula"]] <- extended.formula
+  mf[["drop.unused.levels"]] <- TRUE
   mf[[1L]] <- as.name( "model.frame" )
   
   mf <- eval( mf, parent.frame() )
@@ -143,7 +143,7 @@ georob <-
   ## intrinsic variogram model is used
   
   if( identical( attr( mt, "intercept" ), 0L ) && 
-    variogram.model %in% georob.control()$irf.model )
+    variogram.model %in% georob.control()[["irf.model"]] )
   stop(
     "the fixed effects model must include an intercept ",
     "if an unbounded variogram model is used"
@@ -167,7 +167,7 @@ georob <-
   
   ## check if optionally provided bhat has correct length
   
-  if( !is.null( control$bhat ) && length( y ) != length( control$bhat ) ) stop(
+  if( !is.null( control[["bhat"]] ) && length( y ) != length( control[["bhat"]] ) ) stop(
     "lengths of response vector and 'bhat' do not match"    
   )
   
@@ -177,16 +177,16 @@ georob <-
   
   rankdef.x <- FALSE
   
-  min.max.sv <- range( svd( crossprod( x ) )$d )
+  min.max.sv <- range( svd( crossprod( x ) )[["d"]] )
   condnum <- min.max.sv[1] / min.max.sv[2] 
   
-  if( condnum <= control$min.condnum ){
+  if( condnum <= control[["min.condnum"]] ){
     rankdef.x <- TRUE
     cat( 
       "design matrix has not full column rank (condition number of X^T X: ", 
       signif( condnum, 2 ), ")\ninitial values of fixed effects coefficients are computed by 'lm'\n\n"
     )
-    control$initial.method <- "lm"
+    control[["initial.method"]] <- "lm"
     initial.param <- FALSE
     warning( 
       "design matrix has not full column rank (condition number of X^T X: ", 
@@ -201,64 +201,64 @@ georob <-
   
   ## adjust choice for initial.method to compute regression coefficients
   
-  if( initial.param ) control$initial.method <- "lmrob"
+  if( initial.param ) control[["initial.method"]] <- "lmrob"
   
   ## compute initial guess of fixed effects parameters (betahat)
   
   r.initial.fit <- switch(
-    control$initial.method,
+    control[["initial.method"]],
     rq = {
       
       Rho <- function( u, tau) u * (tau - (u < 0))
-      tau <- control$rq$tau
+      tau <- control[["rq"]][["tau"]]
       process <- (tau < 0 || tau > 1)
       
       f.rq.fit <- rq.fit
-      formals( f.rq.fit ) <- c( alist( x=, y= ), control$rq, alist( ...= ) )
+      formals( f.rq.fit ) <- c( alist( x=, y= ), control[["rq"]], alist( ...= ) )
       
       fit <- f.rq.fit( x = x, y = yy, ... ) 
       
       if( process ) {
-        rho <- list(x = fit$sol[1, ], y = fit$sol[3, ])
+        rho <- list(x = fit[["sol"]][1, ], y = fit[["sol"]][3, ])
       } else {
-        dimnames(fit$residuals) <- list( dimnames( x )[[1]], NULL )
-        rho <- sum( Rho( fit$residuals, tau ) )
+        dimnames(fit[["residuals"]]) <- list( dimnames( x )[[1]], NULL )
+        rho <- sum( Rho( fit[["residuals"]], tau ) )
       }
-      if( control$rq$method == "lasso" ){
+      if( control[["rq"]][["method"]] == "lasso" ){
         class(fit) <- c("lassorq", "rq")
-      } else if( control$rq$method == "scad"){
+      } else if( control[["rq"]][["method"]] == "scad"){
         class(fit) <- c("scadrq", "rq")
       } else {
         class(fit) <- ifelse(process, "rq.process", "rq")
       }
-      fit$na.action <- attr( mf, "na.action" )
-      fit$formula <- formula
-      fit$terms <- mt
-      fit$xlevels <- .getXlevels(mt, mf)
-      fit$call <- cl
-      fit$tau <- tau
-      fit$weights <- w
-      fit$residuals <- drop( fit$residuals )
-      fit$rho <- rho
-      fit$method <- control$rq$method
-      fit$fitted.values <- drop( fit$fitted.values )
+      fit[["na.action"]] <- attr( mf, "na.action" )
+      fit[["formula"]] <- formula
+      fit[["terms"]] <- mt
+      fit[["xlevels"]] <- .getXlevels(mt, mf)
+      fit[["call"]] <- cl
+      fit[["tau"]] <- tau
+      fit[["weights"]] <- w
+      fit[["residuals"]] <- drop( fit[["residuals"]] )
+      fit[["rho"]] <- rho
+      fit[["method"]] <- control[["rq"]][["method"]]
+      fit[["fitted.values"]] <- drop( fit[["fitted.values"]] )
       attr(fit, "na.message") <- attr( m, "na.message" )
-      if( model ) fit$model <- mf
+      if( model ) fit[["model"]] <- mf
       fit
       
     },
     lmrob = {
       
-      fit <- lmrob.fit( x, yy, control = control$lmrob )
-      fit$na.action <- attr(mf, "na.action")
-      fit$offset <- offset
-      fit$contrasts <- attr(x, "contrasts")
-      fit$xlevels <- .getXlevels(mt, mf)
-      fit$call <- cl
-      fit$terms <- mt
-      if( control$lmrob$compute.rd && !is.null(x) )
-      fit$MD <- robustbase:::robMD( x, attr( mt, "intercept" ) )
-      if( !is.null( offset ) ) fit$fitted.values + offset
+      fit <- lmrob.fit( x, yy, control = control[["lmrob"]] )
+      fit[["na.action"]] <- attr(mf, "na.action")
+      fit[["offset"]] <- offset
+      fit[["contrasts"]] <- attr(x, "contrasts")
+      fit[["xlevels"]] <- .getXlevels(mt, mf)
+      fit[["call"]] <- cl
+      fit[["terms"]] <- mt
+      if( control[["lmrob"]][["compute.rd"]] && !is.null(x) )
+      fit[["MD"]] <- robustbase:::robMD( x, attr( mt, "intercept" ) )
+      if( !is.null( offset ) ) fit[["fitted.values"]] + offset
       fit
       
     },
@@ -270,16 +270,16 @@ georob <-
         lm.wfit(x, y, w, offset = offset, singular.ok = TRUE, ...)
       }
       class(fit) <- c(if (is.matrix(y)) "mlm", "lm")
-      fit$na.action <- attr(mf, "na.action")
-      fit$offset <- offset
-      fit$contrasts <- attr(x, "contrasts")
-      fit$xlevels <- .getXlevels(mt, mf)
-      fit$call <- cl
-      fit$terms <- mt
-      if (model) fit$model <- mf
-      if (ret.x) fit$x <- x
-      if (ret.y) fit$y <- y
-      fit$qr <- NULL
+      fit[["na.action"]] <- attr(mf, "na.action")
+      fit[["offset"]] <- offset
+      fit[["contrasts"]] <- attr(x, "contrasts")
+      fit[["xlevels"]] <- .getXlevels(mt, mf)
+      fit[["call"]] <- cl
+      fit[["terms"]] <- mt
+      if (model) fit[["model"]] <- mf
+      if (ret.x) fit[["x"]] <- x
+      if (ret.y) fit[["y"]] <- y
+      fit[["qr"]] <- NULL
       fit
       
     }
@@ -317,11 +317,11 @@ georob <-
   ## prune data set for computing initial values of variogram and
   ## anisotropy parameters by reml
   
-  if( initial.param && tuning.psi < control$tuning.psi.nr ){
+  if( initial.param && tuning.psi < control[["tuning.psi.nr"]] ){
     
     t.sel <- switch(
-      control$initial.method,
-      lmrob = r.initial.fit$rweights > control$min.rweight,
+      control[["initial.method"]],
+      lmrob = r.initial.fit[["rweights"]] > control[["min.rweight"]],
       stop(
         "computing initial values of covariance parameters requires 'lmrob' as ",
         "method for computing initial regression coefficients"
@@ -339,10 +339,10 @@ georob <-
       x = as.matrix( x[t.sel, ] ),
       y = yy[t.sel],
       betahat = coef( r.initial.fit ),
-      bhat = if( is.null( control$bhat ) ){
+      bhat = if( is.null( control[["bhat"]] ) ){
         rep( 0., length( yy ) )[t.sel]
       } else {
-        control$bhat[t.sel]
+        control[["bhat"]][t.sel]
       },
       initial.fit = r.initial.fit,
       locations.objects = list(
@@ -359,43 +359,43 @@ georob <-
       initial.objects = initial.objects,
       variogram.model = variogram.model, param = param, fit.param = fit.param,
       aniso = aniso, fit.aniso = fit.aniso,
-      param.tf = control$param.tf,
-      fwd.tf = control$fwd.tf, 
-      deriv.fwd.tf = control$deriv.fwd.tf,
-      bwd.tf = control$bwd.tf, 
-      safe.param = control$safe.param,
-      tuning.psi = control$tuning.psi.nr,
-      cov.bhat = control$cov.bhat, full.cov.bhat = control$full.cov.bhat,
-      cov.betahat = control$cov.betahat, 
-      cov.bhat.betahat = control$cov.bhat.betahat,
-      cov.delta.bhat = control$cov.delta.bhat,
-      full.cov.delta.bhat = control$full.cov.delta.bhat,
-      cov.delta.bhat.betahat = control$cov.delta.bhat.betahat,
-      cov.ehat = control$cov.ehat, full.cov.ehat = control$full.cov.ehat,
-      cov.ehat.p.bhat = control$cov.ehat.p.bhat, full.cov.ehat.p.bhat = control$full.cov.ehat.p.bhat,
-      aux.cov.pred.target = control$aux.cov.pred.target,
-      min.condnum = control$min.condnum,
+      param.tf = control[["param.tf"]],
+      fwd.tf = control[["fwd.tf"]], 
+      deriv.fwd.tf = control[["deriv.fwd.tf"]],
+      bwd.tf = control[["bwd.tf"]], 
+      safe.param = control[["safe.param"]],
+      tuning.psi = control[["tuning.psi.nr"]],
+      cov.bhat = control[["cov.bhat"]], full.cov.bhat = control[["full.cov.bhat"]],
+      cov.betahat = control[["cov.betahat"]], 
+      cov.bhat.betahat = control[["cov.bhat.betahat"]],
+      cov.delta.bhat = control[["cov.delta.bhat"]],
+      full.cov.delta.bhat = control[["full.cov.delta.bhat"]],
+      cov.delta.bhat.betahat = control[["cov.delta.bhat.betahat"]],
+      cov.ehat = control[["cov.ehat"]], full.cov.ehat = control[["full.cov.ehat"]],
+      cov.ehat.p.bhat = control[["cov.ehat.p.bhat"]], full.cov.ehat.p.bhat = control[["full.cov.ehat.p.bhat"]],
+      aux.cov.pred.target = control[["aux.cov.pred.target"]],
+      min.condnum = control[["min.condnum"]],
       rankdef.x = rankdef.x,
-      psi.func = control$psi.func,
-      tuning.psi.nr = control$tuning.psi.nr,
-      irwls.initial = control$irwls.initial,
-      irwls.maxiter = control$irwls.maxiter,
-      irwls.reltol = control$irwls.reltol,
-      force.gradient = control$force.gradient,
-      zero.dist = control$zero.dist,
-      nleqslv.method =  control$nleqslv$method,
-      nleqslv.control = control$nleqslv$control,
-      optim.method =  control$optim$method,
-      optim.lower = control$optim$lower,
-      optim.upper = control$optim$upper,
-      hessian =       control$optim$hessian,
-      optim.control = control$optim$control,
-      full.output = control$full.output,
+      psi.func = control[["psi.func"]],
+      tuning.psi.nr = control[["tuning.psi.nr"]],
+      irwls.initial = control[["irwls.initial"]],
+      irwls.maxiter = control[["irwls.maxiter"]],
+      irwls.reltol = control[["irwls.reltol"]],
+      force.gradient = control[["force.gradient"]],
+      zero.dist = control[["zero.dist"]],
+      nleqslv.method =  control[["nleqslv"]][["method"]],
+      nleqslv.control = control[["nleqslv"]][["control"]],
+      optim.method =  control[["optim"]][["method"]],
+      optim.lower = control[["optim"]][["lower"]],
+      optim.upper = control[["optim"]][["upper"]],
+      hessian =       control[["optim"]][["hessian"]],
+      optim.control = control[["optim"]][["control"]],
+      full.output = control[["full.output"]],
       verbose = verbose
     )
     
-    param = t.georob$param[names(fit.param)]
-    aniso = t.georob$aniso$aniso[names(fit.aniso)] * c( 1, 1, rep( 180/pi, 3 ) )
+    param = t.georob[["param"]][names(fit.param)]
+    aniso = t.georob[["aniso"]][["aniso"]][names(fit.aniso)] * c( 1, 1, rep( 180/pi, 3 ) )
     
   }
   
@@ -405,10 +405,10 @@ georob <-
     x = as.matrix( x ),
     y = yy,
     betahat = coef( r.initial.fit ),
-    bhat = if( is.null( control$bhat ) ){
+    bhat = if( is.null( control[["bhat"]] ) ){
       rep( 0., length( yy ) )
     } else {
-      control$bhat
+      control[["bhat"]]
     },
     initial.fit = r.initial.fit,
     locations.objects = list(
@@ -425,73 +425,73 @@ georob <-
     initial.objects = initial.objects,
     variogram.model = variogram.model, param = param, fit.param = fit.param,
     aniso = aniso, fit.aniso = fit.aniso,
-    param.tf = control$param.tf,
-    fwd.tf = control$fwd.tf, 
-    deriv.fwd.tf = control$deriv.fwd.tf,
-    bwd.tf = control$bwd.tf, 
-    safe.param = control$safe.param,
+    param.tf = control[["param.tf"]],
+    fwd.tf = control[["fwd.tf"]], 
+    deriv.fwd.tf = control[["deriv.fwd.tf"]],
+    bwd.tf = control[["bwd.tf"]], 
+    safe.param = control[["safe.param"]],
     tuning.psi = tuning.psi,
-    cov.bhat = control$cov.bhat, full.cov.bhat = control$full.cov.bhat,
-    cov.betahat = control$cov.betahat, 
-    cov.bhat.betahat = control$cov.bhat.betahat,
-    cov.delta.bhat = control$cov.delta.bhat,
-    full.cov.delta.bhat = control$full.cov.delta.bhat,
-    cov.delta.bhat.betahat = control$cov.delta.bhat.betahat,
-    cov.ehat = control$cov.ehat, full.cov.ehat = control$full.cov.ehat,
-    cov.ehat.p.bhat = control$cov.ehat.p.bhat, full.cov.ehat.p.bhat = control$full.cov.ehat.p.bhat,
-    aux.cov.pred.target = control$aux.cov.pred.target,
-    min.condnum = control$min.condnum,
+    cov.bhat = control[["cov.bhat"]], full.cov.bhat = control[["full.cov.bhat"]],
+    cov.betahat = control[["cov.betahat"]], 
+    cov.bhat.betahat = control[["cov.bhat.betahat"]],
+    cov.delta.bhat = control[["cov.delta.bhat"]],
+    full.cov.delta.bhat = control[["full.cov.delta.bhat"]],
+    cov.delta.bhat.betahat = control[["cov.delta.bhat.betahat"]],
+    cov.ehat = control[["cov.ehat"]], full.cov.ehat = control[["full.cov.ehat"]],
+    cov.ehat.p.bhat = control[["cov.ehat.p.bhat"]], full.cov.ehat.p.bhat = control[["full.cov.ehat.p.bhat"]],
+    aux.cov.pred.target = control[["aux.cov.pred.target"]],
+    min.condnum = control[["min.condnum"]],
     rankdef.x = rankdef.x,
-    psi.func = control$psi.func,
-    tuning.psi.nr = control$tuning.psi.nr,
-    irwls.initial = control$irwls.initial,
-    irwls.maxiter = control$irwls.maxiter,
-    irwls.reltol = control$irwls.reltol,
-    force.gradient = control$force.gradient,
-    zero.dist = control$zero.dist,
-    nleqslv.method =  control$nleqslv$method,
-    nleqslv.control = control$nleqslv$control,
-    optim.method =  control$optim$method,
-    optim.lower = control$optim$lower,
-    optim.upper = control$optim$upper,
-    hessian =       control$optim$hessian,
-    optim.control = control$optim$control,
-    full.output = control$full.output,
+    psi.func = control[["psi.func"]],
+    tuning.psi.nr = control[["tuning.psi.nr"]],
+    irwls.initial = control[["irwls.initial"]],
+    irwls.maxiter = control[["irwls.maxiter"]],
+    irwls.reltol = control[["irwls.reltol"]],
+    force.gradient = control[["force.gradient"]],
+    zero.dist = control[["zero.dist"]],
+    nleqslv.method =  control[["nleqslv"]][["method"]],
+    nleqslv.control = control[["nleqslv"]][["control"]],
+    optim.method =  control[["optim"]][["method"]],
+    optim.lower = control[["optim"]][["lower"]],
+    optim.upper = control[["optim"]][["upper"]],
+    hessian =       control[["optim"]][["hessian"]],
+    optim.control = control[["optim"]][["control"]],
+    full.output = control[["full.output"]],
     verbose = verbose
   )
   
   ## add offset to fitted values
   
   if( !is.null( offset ) )
-    r.georob$fitted.values <- r.georob$fitted.values + offset
+    r.georob[["fitted.values"]] <- r.georob[["fitted.values"]] + offset
   
   ## add remaining items to output
   
-  if( control$full.output ){
+  if( control[["full.output"]] ){
     
-    r.georob$initial.objects$initial.param <- initial.param
+    r.georob[["initial.objects"]][["initial.param"]] <- initial.param
     
-    if( control$lmrob$compute.rd && !is.null( x ) )
-       r.georob$MD <- robustbase:::robMD( x, attr(mt, "intercept") )
-    if( model ) r.georob$model <- mf
-    if( ret.x ) r.georob$x <- x
-    if( ret.y ) r.georob$y <- y
-    r.georob$df.residual <- -diff( dim( initial.objects$x ) )
+    if( control[["lmrob"]][["compute.rd"]] && !is.null( x ) )
+       r.georob[["MD"]] <- robustbase:::robMD( x, attr(mt, "intercept") )
+    if( model ) r.georob[["model"]] <- mf
+    if( ret.x ) r.georob[["x"]] <- x
+    if( ret.y ) r.georob[["y"]] <- y
+    r.georob[["df.residual"]] <- -diff( dim( initial.objects[["x"]] ) )
     
-    r.georob$na.action <- attr(mf, "na.action")
-    r.georob$offset <- offset
-    r.georob$contrasts <- attr(x, "contrasts")
-    r.georob$xlevels <- .getXlevels(mt, mf)
-    r.georob$rank <- ncol( initial.objects$x )
-    r.georob$call <- cl
-    r.georob$terms <- mt
+    r.georob[["na.action"]] <- attr(mf, "na.action")
+    r.georob[["offset"]] <- offset
+    r.georob[["contrasts"]] <- attr(x, "contrasts")
+    r.georob[["xlevels"]] <- .getXlevels(mt, mf)
+    r.georob[["rank"]] <- ncol( initial.objects[["x"]] )
+    r.georob[["call"]] <- cl
+    r.georob[["terms"]] <- mt
     
   }
   
   ## set missing names of coefficients (bug of update)
   
-  if( length( r.georob$coefficients ) == 1 && is.null( names( r.georob$coefficients ) ) ){
-    names( r.georob$coefficients ) <- "(Intercept)"
+  if( length( r.georob[["coefficients"]] ) == 1 && is.null( names( r.georob[["coefficients"]] ) ) ){
+    names( r.georob[["coefficients"]] ) <- "(Intercept)"
   }
 
   
@@ -516,9 +516,9 @@ georob.control <-
     tuning.psi.nr = 1000,
     min.rweight = 0.25,
     irwls.initial = TRUE,
-    irwls.maxiter = 50, irwls.reltol = sqrt( .Machine$double.eps ),
+    irwls.maxiter = 50, irwls.reltol = sqrt( .Machine[["double.eps"]] ),
     force.gradient = FALSE,
-    zero.dist = sqrt( .Machine$double.eps ),
+    zero.dist = sqrt( .Machine[["double.eps"]] ),
     cov.bhat = FALSE, full.cov.bhat = FALSE,
     cov.betahat = TRUE, 
     cov.bhat.betahat = FALSE,
@@ -598,6 +598,8 @@ georob.control <-
   ## 2012-05-03 AP bounds for safe parameter values
   ## 2012-05-04 AP modifications for lognormal block kriging
   ## 2013-04-23 AP new names for robustness weights
+  ## 2013-06-12 AP changes in stored items of Valpha object
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   if( 
     !( all( param.tf %in% names( fwd.tf ) ) &&
@@ -631,10 +633,7 @@ georob.control <-
     min.condnum = min.condnum,
     irf.models = c( "DeWijsian", "fractalB", "genB" ),
     rq = rq, lmrob = lmrob, nleqslv = nleqslv, optim = optim, 
-    full.output = full.output,
-    stored.items = list( 
-      Valpha.objects = c( "Valpha.inverse", "Valpha.ilcf", "Valpha.ucf", "gcr.constant" )
-    )
+    full.output = full.output
   )
   
 }
@@ -794,7 +793,9 @@ compress <-
   
   ## function stores a list of or a single lower, upper triangular or
   ## symmetric matrix compactly
-  
+
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
+
   aux <- function( x ){
     struc <- attr( x, "struc" )
     if( !is.null( struc ) ){
@@ -840,40 +841,42 @@ expand <-
   
   ## function expands a list of or a compactly stored lower, upper
   ## triangular or symmetric matrices
-  
+
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
+
   aux <- function( x ){
     struc <- attr( x, "struc" )
     if( !is.null( struc ) ){
       switch( 
         struc,
         sym = {
-          n <- length( x$diag )
-          dn <- names( x$diag )
+          n <- length( x[["diag"]] )
+          dn <- names( x[["diag"]] )
           aux <- matrix( 0., n, n )
-          aux[lower.tri( aux )] <- x$tri
+          aux[lower.tri( aux )] <- x[["tri"]]
           aux <- aux + t( aux )
-          diag( aux ) <- x$diag
+          diag( aux ) <- x[["diag"]]
           dimnames( aux ) <- list( dn, dn )
           attr( aux, "struc" ) <- "sym"
           aux
         },
         lt = {
-          n <- length( x$diag )
-          dn <- names( x$diag )
+          n <- length( x[["diag"]] )
+          dn <- names( x[["diag"]] )
           aux <- matrix( 0., n, n )
-          aux[lower.tri( aux )] <- x$tri
-          diag( aux ) <- x$diag
+          aux[lower.tri( aux )] <- x[["tri"]]
+          diag( aux ) <- x[["diag"]]
           dimnames( aux ) <- list( dn, dn )
           attr( aux, "struc" ) <- "lt"
           aux
         }
         ,
         ut = {
-          n <- length( x$diag )
-          dn <- names( x$diag )
+          n <- length( x[["diag"]] )
+          dn <- names( x[["diag"]] )
           aux <- matrix( 0., n, n )
-          aux[upper.tri( aux )] <- x$tri
-          diag( aux ) <- x$diag
+          aux[upper.tri( aux )] <- x[["tri"]]
+          diag( aux ) <- x[["diag"]]
           dimnames( aux ) <- list( dn, dn )
           attr( aux, "struc" ) <- "ut"
           aux

@@ -1,4 +1,4 @@
-% 2013-05-24 A. Papritz
+% 2013-06-12 A. Papritz
 % R CMD Rdconv -t html -o bla.html cv.georob.Rd ; open bla.html; R CMD Rd2pdf --force cv.georob.Rd; 
 
 \encoding{macintosh}
@@ -23,8 +23,8 @@
 \usage{
 \method{cv}{georob}(object, formula = NULL, subset = NULL, nset = 10, 
     seed = NULL, sets = NULL, duplicates.in.same.set = TRUE, 
-    re.estimate = TRUE, param = object$param, 
-    fit.param = object$initial.objects$fit.param, 
+    re.estimate = TRUE, param = object[["param"]], 
+    fit.param = object[["initial.objects"]][["fit.param"]], 
     return.fit = FALSE, reduced.output = TRUE, lgn = FALSE, 
     ncores = min(nset, detectCores()), verbose = 0, ...)
 }
@@ -69,18 +69,18 @@
   with variogram parameters passed by \code{\link[stats]{update}} to
   \code{\link{georob}}, see \emph{Details}.  If \code{param} is a matrix
   (or a data frame) then it must have \code{nset} rows and
-  \code{length(object$param)} columns with initial values of variogram
+  \code{length(object[["param"]])} columns with initial values of variogram
   parameters for the \code{nset} cross-validation sets and
-  \code{colnames(param)} must match \code{names(object$param)}.}
+  \code{colnames(param)} must match \code{names(object[["param"]])}.}
   
   \item{fit.param}{an optional named logical vector or a matrix or data
   frame defining which variogram parameters should be adjusted when passed
   by \code{\link[stats]{update}} to \code{\link{georob}}, see
   \emph{Details}.  If \code{fit.param} is a matrix (or a data frame) then
-  it must have \code{nset} rows and \code{length(object$param)} columns
+  it must have \code{nset} rows and \code{length(object[["param"]])} columns
   with variogram parameter fitting flags for the \code{nset}
   cross-validation sets and \code{colnames(param)} must match
-  \code{names(object$param)}.}
+  \code{names(object[["param"]])}.}
   
   \item{return.fit}{logical controlling whether information about the fit
   should be returned for when re-estimating the model with the reduced data

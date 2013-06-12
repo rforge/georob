@@ -25,9 +25,6 @@
 
 # 2011-08-11 A. Papritz
 
-# ToDos:
-# - ...$xy durch ...[["xy"]] ersetzen
-
 ## ##############################################################################
 
 model.frame.georob <- 
@@ -92,6 +89,7 @@ print.georob <-
   ## 2011-08-13 A. Papritz
   ## 2012-02-07 AP change for anisotropic variograms 
   ## 2012-12-18 AP invisible(x)
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   ## code borrowed from print.lmrob for printing fixed effects coeffcients
   
@@ -107,10 +105,10 @@ print.georob <-
   ## print variogram parameters
   
   cat("\n")
-  cat( "Variogram: ", x$variogram.model, "\n" )
-  param <- x$param
+  cat( "Variogram: ", x[["variogram.model"]], "\n" )
+  param <- x[["param"]]
   names( param ) <- ifelse(
-    x$initial.objects$fit.param,
+    x[["initial.objects"]][["fit.param"]],
     names( param ),
     paste( names( param ), "(fixed)", sep = "" )
   )
@@ -121,13 +119,13 @@ print.georob <-
   
   ## print anisotropy parameters
   
-  if( !x$aniso$isotropic ){
+  if( !x[["aniso"]][["isotropic"]] ){
     
     cat("\n")
     cat( "Anisotropy parameters: ", "\n" )
-    aniso <- x$aniso$aniso * c( rep(1, 2), rep( 180/pi, 3 ) )
+    aniso <- x[["aniso"]][["aniso"]] * c( rep(1, 2), rep( 180/pi, 3 ) )
     names( aniso ) <- ifelse(
-      x$initial.objects$fit.aniso,
+      x[["initial.objects"]][["fit.aniso"]],
       names( aniso ),
       paste( names( aniso ), "(fixed)", sep = "" )
     )
@@ -172,60 +170,40 @@ ranef.georob <- random.effects.georob <-
   ## 2013-05-31 AP correct handling of missing observations
   ## 2013-05-31 AP revised expansion of covariance matrices
   ## 2013-05-06 AP changes for solving estimating equations for xi
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   ## temporarily redefine na.action component of object
   
-  object.na <- object$na.action
-  if( identical( class( object$na.action ), "exclude" ) ){
-    class( object$na.action ) <- "omit"
+  object.na <- object[["na.action"]]
+  if( identical( class( object[["na.action"]] ), "exclude" ) ){
+    class( object[["na.action"]] ) <- "omit"
   }
 
-  Valpha.objects <- expand( object$Valpha.objects )
-  covmat         <- expand( object$cov )
+  Valpha.objects <- expand( object[["Valpha.objects"]] )
+  covmat         <- expand( object[["cov"]] )
   
-  bhat <- object$bhat   
+  bhat <- object[["bhat"]]   
   
   if( standard ){
     
-    if( is.null( covmat$cov.bhat ) ){
+    if( is.null( covmat[["cov.bhat"]] ) ){
       
       ## compute standard errors of residuals
-      
-      if( is.null( Valpha.objects$Valpha.inverse ) || 
-        is.null( Valpha.objects$Valpha.ilcf ) 
-      ) stop( 
-        "'Valpha.objects' incomplete or missing in georob object;\n", 
-        "'Valpha.objects' must include components 'Valpha.inverse' and 'Valpha.ilcf'"
-      )
-      if( is.null( object$expectations ) ) stop( 
-        "'expectations' missing in georob object;\n",
-        "use 'full.output = TRUE' when fitting the object"
-      )
-      
-      
-      if( is.null( Valpha.objects$Valpha.ucf ) ){
-        
-        ## compute upper cholesky factor of correlation matrix Valpha
-        ## which is needed to compute cov( bhat )
-        
-        Valpha.objects$Valpha.ucf <- t( solve( Valpha.objects$Valpha.ilcf ) )
-        
-      }            
       
       X <- model.matrix( 
         terms( object ),
         model.frame( object ) 
-      )[!duplicated( object$Tmat ), , drop = FALSE]
+      )[!duplicated( object[["Tmat"]] ), , drop = FALSE]
       
       r.cov <- compute.covariances(
         Valpha.objects = Valpha.objects,
         Aalpha = object[["Aalpha"]],
-        Palpha = expand( object[["Palpha"]] ),
-        rweights = object$rweights,
-        XX = X, TT = object$Tmat, names.yy = rownames( model.frame( object ) ),
-        nugget = object$param["nugget"],
-        eta = sum( object$param[c( "variance", "snugget")] ) / object$param["nugget"],
-        expectations = object$expectations,
+        Palpha = object[["Palpha"]],
+        rweights = object[["rweights"]],
+        XX = X, TT = object[["Tmat"]], names.yy = rownames( model.frame( object ) ),
+        nugget = object[["param"]]["nugget"],
+        eta = sum( object[["param"]][c( "variance", "snugget")] ) / object[["param"]]["nugget"],
+        expectations = object[["expectations"]],
         cov.bhat = TRUE, full.cov.bhat = FALSE,
         cov.betahat = FALSE, 
         cov.bhat.betahat = FALSE,
@@ -237,20 +215,20 @@ ranef.georob <- random.effects.georob <-
         verbose = 0
       )
       
-      if( r.cov$error ) stop( 
+      if( r.cov[["error"]] ) stop( 
         "an error occurred when computing the variances of the random effects" 
       )
       
-      se <- sqrt( r.cov$cov.bhat )       
+      se <- sqrt( r.cov[["cov.bhat"]] )       
       
     } else {
       
       ## extract standard errors of residuals from georob object
       
-      if( is.matrix( covmat$cov.bhat ) ){
-        se <- sqrt( diag( covmat$cov.bhat ) )
+      if( is.matrix( covmat[["cov.bhat"]] ) ){
+        se <- sqrt( diag( covmat[["cov.bhat"]] ) )
       } else {
-        se <- sqrt( covmat$cov.bhat )
+        se <- sqrt( covmat[["cov.bhat"]] )
       }
       
     }
@@ -281,8 +259,9 @@ fixef.georob <- fixed.effects.georob <-
   ## ...       further arguments passed to methods
   
   ## 2012-11-26 A. Papritz    
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
 
-  object$coef 
+  object[["coef"]] 
 
 }
 
@@ -314,6 +293,7 @@ residuals.georob <- resid.georob <-
   ## 2011-10-13 A. Papritz    
   ## 2011-12-14 AP modified for replicated observations
   ## 2013-05-31 AP modified for computing partial residuals for single terms
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   type <- match.arg( type )
   
@@ -321,28 +301,28 @@ residuals.georob <- resid.georob <-
   
   ## temporarily redefine na.action component of object
   
-  object.na <- object$na.action
-  if( identical( class( object$na.action ), "exclude" ) ){
-    class( object$na.action ) <- "omit"
+  object.na <- object[["na.action"]]
+  if( identical( class( object[["na.action"]] ), "exclude" ) ){
+    class( object[["na.action"]] ) <- "omit"
   }
   
-  r <- object$residuals
+  r <- object[["residuals"]]
   res <- switch(
     type, 
     working = , 
     response = r, 
     deviance = , 
-    pearson = if( is.null(object$weights) ) r else r * sqrt(object$weights), 
+    pearson = if( is.null(object[["weights"]]) ) r else r * sqrt(object[["weights"]]), 
     partial = r
   )
   
     
   if( level == 0 && any( type %in% c( "working", "response", "partial" ) ) ){
-    res <- res + ranef( object, standard = FALSE )[object$Tmat]
+    res <- res + ranef( object, standard = FALSE )[object[["Tmat"]]]
   }
   
   if( type == "partial" ) 
-    res <- res + predict( object, type = "terms", terms = terms )$fit
+    res <- res + predict( object, type = "terms", terms = terms )[["fit"]]
   drop( res )
   
   naresid( object.na, res )
@@ -373,55 +353,41 @@ rstandard.georob <-
   ## 2013-05-31 AP correct handling of missing observations
   ## 2013-05-31 AP revised expansion of covariance matrices
   ## 2013-05-06 AP changes for solving estimating equations for xi
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   ## temporarily redefine na.action component of model
   
-  model.na <- model$na.action
-  if( identical( class( model$na.action ), "exclude" ) ){
-    class( model$na.action ) <- "omit"
+  model.na <- model[["na.action"]]
+  if( identical( class( model[["na.action"]] ), "exclude" ) ){
+    class( model[["na.action"]] ) <- "omit"
   }
   
-  Valpha.objects <- expand( model$Valpha.objects )
-  covmat         <- expand( model$cov )
+  Valpha.objects <- expand( model[["Valpha.objects"]] )
+  covmat         <- expand( model[["cov"]] )
   
   if( !level %in% 1:0 ) stop( "wrong level: must be either 1 or 0" )
   
   if( 
-    ( is.null( covmat$cov.ehat ) & level == 1 ) ||
-    ( is.null( covmat$cov.ehat.p.bhat ) & level == 0 ) 
+    ( is.null( covmat[["cov.ehat"]] ) & level == 1 ) ||
+    ( is.null( covmat[["cov.ehat.p.bhat"]] ) & level == 0 ) 
   ){
     
     ## compute standard errors of residuals
     
-    if( is.null( Valpha.objects$Valpha.inverse ) || 
-      is.null( Valpha.objects$Valpha.ilcf ) 
-    ) stop( 
-      "'Valpha.objects' incomplete or missing in georob object;\n", 
-      "'Valpha.objects' must include components 'Valpha.inverse' and 'Valpha.ilcf'"
-    )
-    if( is.null( model$expectations ) ) stop( 
-      "'expectations' missing in georob object;\n",
-      "use 'full.output = TRUE' when fitting the model"
-    )
-    
     X <- model.matrix( 
       terms( model), 
       model.frame( model ) 
-    )[!duplicated( model$Tmat ), , drop = FALSE]
-    
-    if( is.null( Valpha.objects$Valpha.ucf ) ){
-      Valpha.objects$Valpha.ucf <- t( solve( Valpha.objects$Valpha.ilcf ) )
-    }
+    )[!duplicated( model[["Tmat"]] ), , drop = FALSE]
     
     r.cov <- compute.covariances(
       Valpha.objects = Valpha.objects,
       Aalpha = model[["Aalpha"]],
-      Palpha = expand( model[["Palpha"]] ),
-      rweights = model$rweights,
-      XX = X, TT = model$Tmat, names.yy = rownames( model.frame( model ) ),
-      nugget = model$param["nugget"],
-      eta = sum( model$param[c( "variance", "snugget")] ) / model$param["nugget"],
-      expectations = model$expectations,
+      Palpha = model[["Palpha"]],
+      rweights = model[["rweights"]],
+      XX = X, TT = model[["Tmat"]], names.yy = rownames( model.frame( model ) ),
+      nugget = model[["param"]]["nugget"],
+      eta = sum( model[["param"]][c( "variance", "snugget")] ) / model[["param"]]["nugget"],
+      expectations = model[["expectations"]],
       cov.bhat = FALSE, full.cov.bhat = FALSE,
       cov.betahat = FALSE, 
       cov.bhat.betahat = FALSE,
@@ -433,14 +399,14 @@ rstandard.georob <-
       verbose = 0
     )
     
-    if( r.cov$error ) stop( 
+    if( r.cov[["error"]] ) stop( 
       "an error occurred when computing the variance of the residuals" 
     )
     
     if( level == 1 ){
-      covmat$cov.ehat <-r.cov$cov.ehat 
+      covmat[["cov.ehat"]] <-r.cov[["cov.ehat"]] 
     } else {
-      covmat$cov.ehat.p.bhat <-r.cov$cov.ehat.p.bhat 
+      covmat[["cov.ehat.p.bhat"]] <-r.cov[["cov.ehat.p.bhat"]] 
     }
     
   } 
@@ -448,9 +414,9 @@ rstandard.georob <-
   ## extract standard errors of residuals from georob object
   
   if( level == 1 ){
-    se <- covmat$cov.ehat
+    se <- covmat[["cov.ehat"]]
   } else {
-    se <- covmat$cov.ehat.p.bhat
+    se <- covmat[["cov.ehat.p.bhat"]]
   }
   if( is.matrix( se ) ){
     se <- sqrt( diag( se ) )
@@ -479,6 +445,7 @@ rstudent.georob <-
   ## ...       further arguments passed to cv.georob
   
   ## 2011-12-22 A. Papritz    
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   if( !identical( class( model )[1], "georob" ) ) stop(
     "model is not of class 'georob'" 
@@ -516,74 +483,75 @@ summary.georob <-
   ## 2012-11-27 AP changes in parameter back-transformation
   ## 2013-04-23 AP new names for robustness weights
   ## 2013-05-31 AP revised expansion of covariance matrices
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
-  covmat       <- expand( object$cov )
+  covmat       <- expand( object[["cov"]] )
   
   ans <- object[c(
     "call", "residuals", "bhat", "rweights", "converged", "convergence.code", 
     "iter", "loglik", "variogram.model", "gradient",
     "tuning.psi", "df.residual"
   )]
-  ans <- c( ans, object$initial.objects["fit.param"] )
+  ans <- c( ans, object[["initial.objects"]]["fit.param"] )
   
-  if( !object$aniso$isotropic ) ans$fit.param <- c( 
-    ans$fit.param, object$initial.objects$fit.aniso
+  if( !object[["aniso"]][["isotropic"]] ) ans[["fit.param"]] <- c( 
+    ans[["fit.param"]], object[["initial.objects"]][["fit.aniso"]]
   )
     
-  ans$terms <- NA
-  ans$scale <- sqrt(object$param["nugget"])
-  ans$control$method <- "TODO: PRINT GLSROB CONTROL PARAMETERS HERE"
+  ans[["terms"]] <- NA
+  ans[["scale"]] <- sqrt(object[["param"]]["nugget"])
+  ans[["control"]][["method"]] <- "TODO: PRINT GLSROB CONTROL PARAMETERS HERE"
   
-  se <- sqrt(diag(covmat$cov.betahat))
-  est <- object$coefficients
+  se <- sqrt(diag(covmat[["cov.betahat"]]))
+  est <- object[["coefficients"]]
   tval <- est/se
   
-  ans$coefficients <- cbind( 
-    est, se, tval, 2 * pt( abs(tval), object$df.residual, lower.tail = FALSE ) 
+  ans[["coefficients"]] <- cbind( 
+    est, se, tval, 2 * pt( abs(tval), object[["df.residual"]], lower.tail = FALSE ) 
   )
-  dimnames( ans$coefficients ) <- list( 
+  dimnames( ans[["coefficients"]] ) <- list( 
     names(est), c("Estimate", "Std. Error", "t value", "Pr(>|t|)")
   )
   
   if( correlation ){
-    ans$correlation <- covmat$cov.betahat / outer(se, se)
+    ans[["correlation"]] <- covmat[["cov.betahat"]] / outer(se, se)
   }
   
-  ans$param <- as.matrix( object$param, ncol = 1 )
+  ans[["param"]] <- as.matrix( object[["param"]], ncol = 1 )
   
-  if( !object$aniso$isotropic ) ans$param <- rbind( 
-    ans$param,
-    as.matrix( object$aniso$aniso, ncol = 1 ) * c( rep( 1, 2 ), rep( 180/pi, 3 ) )
+  if( !object[["aniso"]][["isotropic"]] ) ans[["param"]] <- rbind( 
+    ans[["param"]],
+    as.matrix( object[["aniso"]][["aniso"]], ncol = 1 ) * c( rep( 1, 2 ), rep( 180/pi, 3 ) )
   )
   
-  colnames( ans$param ) <- "Estimate"
+  colnames( ans[["param"]] ) <- "Estimate"
   
   ## compute confidence intervals of variogram parameters from observed
   ## Fisher information matrix (Gaussian REML only)
   
-  if( !is.null( object$hessian ) ){
+  if( !is.null( object[["hessian"]] ) ){
     
     ## initialization
     
     cor.tf.param <- cov.tf.param <- matrix( 
-      NA, nrow = nrow( object$hessian ), ncol = nrow( object$hessian ),
-      dimnames = dimnames( object$hessian )
+      NA, nrow = nrow( object[["hessian"]] ), ncol = nrow( object[["hessian"]] ),
+      dimnames = dimnames( object[["hessian"]] )
     )
     
-    se <- rep( NA, nrow( object$hessian ) )
-    names( se ) <- rownames( object$hessian)
+    se <- rep( NA, nrow( object[["hessian"]] ) )
+    names( se ) <- rownames( object[["hessian"]])
     
-    ci <- matrix( NA, nrow = nrow( ans$param ), ncol = 2 )
+    ci <- matrix( NA, nrow = nrow( ans[["param"]] ), ncol = 2 )
     colnames( ci ) <- c( "Lower", "Upper" )
-    rownames( ci ) <- rownames( ans$param )
+    rownames( ci ) <- rownames( ans[["param"]] )
     
     ## select parameters that are not on boundary of parameter space
     
-    sr  <- !apply( object$hessian, 1, function( x ) all( is.na( x ) ) )
+    sr  <- !apply( object[["hessian"]], 1, function( x ) all( is.na( x ) ) )
     
     if( sum( sr ) > 0 ){
       
-      t.chol <- try( chol( object$hessian[sr, sr] ), silent = TRUE )
+      t.chol <- try( chol( object[["hessian"]][sr, sr] ), silent = TRUE )
       
       if( !identical( class( t.chol ), "try-error" ) ){
         
@@ -604,15 +572,15 @@ summary.georob <-
         
         ## compute confidence interval on original scale of parameters
         
-        sel.names <- names( object$param[object$initial.objects$fit.param] )
-        if( !object$aniso$isotropic ) sel.names <- c( 
+        sel.names <- names( object[["param"]][object[["initial.objects"]][["fit.param"]]] )
+        if( !object[["aniso"]][["isotropic"]] ) sel.names <- c( 
           sel.names,
-          names( object$aniso$aniso[object$initial.objects$fit.aniso] )
+          names( object[["aniso"]][["aniso"]][object[["initial.objects"]][["fit.aniso"]]] )
         )
         sel.names <- sel.names[sr]
         
-        ff <- c( rep( 1, length( object$param ) + 2 ), rep( 180/pi, 3 ) )
-        names( ff ) <- names( c( object$param, object$aniso$aniso ) )
+        ff <- c( rep( 1, length( object[["param"]] ) + 2 ), rep( 180/pi, 3 ) )
+        names( ff ) <- names( c( object[["param"]], object[["aniso"]][["aniso"]] ) )
         
         ci[sel.names, ] <- t( 
           sapply(
@@ -623,19 +591,19 @@ summary.georob <-
                 c(-1, 1) * se[x] * qnorm( (1-signif)/2, lower.tail = FALSE ) 
               )
             },
-            param         = c( object$param, object$aniso$aniso ),
+            param         = c( object[["param"]], object[["aniso"]][["aniso"]] ),
             f             = ff,
             se            = se,
-            param.tf      = object$param.tf,
-            trafo.fct     = object$fwd.tf,
-            inv.trafo.fct = object$bwd.tf
+            param.tf      = object[["param.tf"]],
+            trafo.fct     = object[["fwd.tf"]],
+            inv.trafo.fct = object[["bwd.tf"]]
           )
         )
         is.angle <- rownames( ci ) %in% c( "omega", "phi", "zeta" )
         if( sum(is.angle) > 0 ) ci[is.angle, ] <- ci[is.angle, ] * 180/pi
         
-        ans$param <- cbind( ans$param, ci )
-        if( correlation ) ans$cor.tf.param <- cor.tf.param
+        ans[["param"]] <- cbind( ans[["param"]], ci )
+        if( correlation ) ans[["cor.tf.param"]] <- cor.tf.param
         
       } else {
         warning(
@@ -646,12 +614,12 @@ summary.georob <-
     } 
   }
   
-  ans$se.residuals <- if( !is.null( covmat$cov.ehat ) ){
+  ans[["se.residuals"]] <- if( !is.null( covmat[["cov.ehat"]] ) ){
     
-    if( is.matrix( covmat$cov.ehat ) ){
-      sqrt( diag( covmat$cov.ehat ) )
+    if( is.matrix( covmat[["cov.ehat"]] ) ){
+      sqrt( diag( covmat[["cov.ehat"]] ) )
     } else {
-      sqrt( covmat$cov.ehat )
+      sqrt( covmat[["cov.ehat"]] )
     }
     
   } else NULL
@@ -682,48 +650,48 @@ print.summary.georob <-
   ## 2012-02-07 AP change for anisotropic variograms
   ## 2012-12-18 AP invisible(x)
   ## 2013-04-23 AP new names for robustness weights
-  
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   cat("\nCall:")
-  cat( paste( deparse(x$call), sep = "\n", collapse = "\n"),  "\n", sep = "" )
+  cat( paste( deparse(x[["call"]]), sep = "\n", collapse = "\n"),  "\n", sep = "" )
   
   
   cat("\nTuning constant: ", x[["tuning.psi"]], "\n" )
   
-  if( is.na( x$converged ) ){
+  if( is.na( x[["converged"]] ) ){
     cat( "\nEstimation with fixed variogram parameters\n" )
     
   } else {
     
-    if(!(x$converged)) {
+    if(!(x[["converged"]])) {
       cat( 
         "\nAlgorithm did not converge, diagnostic code: ", 
-        x$convergence.code, "\n"
+        x[["convergence.code"]], "\n"
       )
     } else {
       cat(
-        "\nConvergence in", x$iter[1], "function and", 
-        x$iter[2], "Jacobian/gradient evaluations\n"
+        "\nConvergence in", x[["iter"]][1], "function and", 
+        x[["iter"]][2], "Jacobian/gradient evaluations\n"
       )
     }
     
-    attr( x$gradient, "eeq.emp" ) <- NULL
-    attr( x$gradient, "eeq.exp" ) <- NULL
+    attr( x[["gradient"]], "eeq.emp" ) <- NULL
+    attr( x[["gradient"]], "eeq.exp" ) <- NULL
     
     cat( "\nEstimating equations (gradient)\n")
-    print( x$gradient, digits = digits, ... )
+    print( x[["gradient"]], digits = digits, ... )
     
-    if( x$tuning.psi >= 
-      georob.control()$tuning.psi.nr ) cat(
+    if( x[["tuning.psi"]] >= 
+      georob.control()[["tuning.psi.nr"]] ) cat(
       "\nMaximized restricted log-likelihood:", 
-      x$loglik, "\n"
+      x[["loglik"]], "\n"
     )
     
   }
   
-  df <- x$df.residual
+  df <- x[["df.residual"]]
   
-  bhat <- x$bhat
+  bhat <- x[["bhat"]]
   cat( "\nPredicted latent variable (z):\n")
   if(df > 5){
     nam <- c("Min", "1Q", "Median", "3Q", "Max")
@@ -732,7 +700,7 @@ print.summary.georob <-
   }
   else print( bhat, digits = digits, ...)
   
-  resid <- x$residuals
+  resid <- x[["residuals"]]
   cat( "\nResiduals (epsilon):\n")
   if(df > 5){
     nam <- c("Min", "1Q", "Median", "3Q", "Max")
@@ -741,8 +709,8 @@ print.summary.georob <-
   }
   else print( resid, digits = digits, ...)
   
-  if( !is.null( x$se.residuals ) ){
-    resid <- x$residuals / x$se.residuals
+  if( !is.null( x[["se.residuals"]] ) ){
+    resid <- x[["residuals"]] / x[["se.residuals"]]
     cat( "\nStandardized residuals:\n")
     if(df > 5){
       nam <- c("Min", "1Q", "Median", "3Q", "Max")
@@ -752,21 +720,21 @@ print.summary.georob <-
     else print( resid, digits = digits, ...)
   }
   
-  cat( "\nVariogram: ", x$variogram.model, "\n" )
-  rownames( x$param ) <- ifelse(
-    x$fit.param,
-    rownames( x$param ),
-    paste( rownames( x$param ), "(fixed)", sep = "" )
+  cat( "\nVariogram: ", x[["variogram.model"]], "\n" )
+  rownames( x[["param"]] ) <- ifelse(
+    x[["fit.param"]],
+    rownames( x[["param"]] ),
+    paste( rownames( x[["param"]] ), "(fixed)", sep = "" )
   )
-  ##        print( format( x$param, digits = digits ), print.gap = 2, quote = FALSE )
+  ##        print( format( x[["param"]], digits = digits ), print.gap = 2, quote = FALSE )
   printCoefmat(
-    x$param, digits = digits, signif.stars = FALSE, ...
+    x[["param"]], digits = digits, signif.stars = FALSE, ...
   )
   
   
-  if( !is.null( x$cor.tf.param ) ){
+  if( !is.null( x[["cor.tf.param"]] ) ){
     
-    correl <- x$cor.tf.param
+    correl <- x[["cor.tf.param"]]
     p <- NCOL(correl)
     if( p > 1 ){
       cat("\nCorrelation of (transformed) variogram parameters:\n")
@@ -780,15 +748,15 @@ print.summary.georob <-
   
   cat( "\nFixed effects coefficients:\n" )
   printCoefmat(
-    x$coefficients, digits = digits, signif.stars = signif.stars, ...
+    x[["coefficients"]], digits = digits, signif.stars = signif.stars, ...
   )
   
   cat(
     "\nResidual standard error (sqrt(nugget)):",
-    format(signif(x$scale,  digits)), "\n"
+    format(signif(x[["scale"]],  digits)), "\n"
   )
   
-  correl <- x$correlation
+  correl <- x[["correlation"]]
   if( !is.null(correl) ){
     p <- NCOL(correl)
     if( p > 1 ){
@@ -801,7 +769,7 @@ print.summary.georob <-
   }
   
   cat("\n")
-  summarizeRobWeights(x$rweights, digits = digits, ... )
+  summarizeRobWeights(x[["rweights"]], digits = digits, ... )
   
   invisible( x )
 }
@@ -812,9 +780,10 @@ vcov.georob <-
   function( object, ... )
 {
   
-    ## 2012-11-04 AP handling compressed cov.betahat
+  ## 2012-11-04 AP handling compressed cov.betahat
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
 
-    result <- expand( object$cov$cov.betahat )
+    result <- expand( object[["cov"]][["cov.betahat"]] )
     attr( result, "struc" ) <- NULL
     result
     
@@ -830,6 +799,7 @@ waldtest.georob <-
 {
 
   ## 2012-02-08 AP change for anisotropic variograms
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
 
   ## refit model with fixed variogram parameters
   
@@ -841,13 +811,13 @@ waldtest.georob <-
     
     object <- update( 
       object, 
-      param = object$param,
-      aniso = object$aniso$aniso,
+      param = object[["param"]],
+      aniso = object[["aniso"]][["aniso"]],
       fit.param = c( 
         variance = FALSE, snugget = FALSE, nugget = FALSE, scale = FALSE, 
         a = FALSE, alpha = FALSE, beta = FALSE, delta = FALSE, 
         gamma = FALSE, lambda = FALSE, n = FALSE, nu = FALSE
-      )[names( object$param )],
+      )[names( object[["param"]] )],
       fit.aniso = c(
         f1 = FALSE, f2 = FALSE, omega = FALSE, phi = FALSE, zeta = FALSE 
       ),
@@ -871,21 +841,22 @@ logLik.georob <-
 {
   
   ## 2012-12-22 method for extracting (restricted) loglikelihood
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
    val <- if( REML ){
-    val <- object$loglik 
+    val <- object[["loglik"]] 
   } else if( object[["tuning.psi"]] >= georob.control()[["tuning.psi.nr"]] ){
     D <- deviance( object )
     -0.5 * ( 
-      D + attr( D, "log.det.covmat" ) + length( object$residuals ) * log( 2 * pi )
+      D + attr( D, "log.det.covmat" ) + length( object[["residuals"]] ) * log( 2 * pi )
     ) 
   } else NA_real_
   
-  attr(val, "nall") <- length(object$residuals)
-  attr(val, "nobs") <- object$df.residual
-  attr(val, "df") <- length(object$coefficients) + 
-    sum( object$initial.objects$fit.param ) +
-    sum( object$initial.objects$fit.aniso)
+  attr(val, "nall") <- length(object[["residuals"]])
+  attr(val, "nobs") <- object[["df.residual"]]
+  attr(val, "df") <- length(object[["coefficients"]]) + 
+    sum( object[["initial.objects"]][["fit.param"]] ) +
+    sum( object[["initial.objects"]][["fit.aniso"]])
   
   class(val) <- "logLik"
   val
@@ -904,19 +875,19 @@ deviance.georob <-
   ## 2012-12-22 A. Papritz
   ## 2013-05-23 AP correct handling of missing observations
   ## 2013-05-31 AP revised expansion of covariance matrices
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   ## redefine na.action component of object
   
-  if( identical( class( object$na.action ), "exclude" ) ){
-    class( object$na.action ) <- "omit"
+  if( identical( class( object[["na.action"]] ), "exclude" ) ){
+    class( object[["na.action"]] ) <- "omit"
   }
   
   if( object[["tuning.psi"]] < georob.control()[["tuning.psi.nr"]] ){
     result <- NA_real_
   } else {
     Valpha.objects <- expand( object[["Valpha.objects"]] )
-    G <- sum( object[["param"]][c("variance", "snugget")] ) *
-      t(Valpha.objects[["Valpha.ucf"]]) %*% Valpha.objects[["Valpha.ucf"]]
+    G <- sum( object[["param"]][c("variance", "snugget")] ) * Valpha.objects[["Valpha"]]
       
     diag( G ) <- diag( G ) + object[["param"]]["nugget"]
     G <- G[object[["Tmat"]], object[["Tmat"]]]

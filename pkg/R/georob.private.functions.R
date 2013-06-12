@@ -27,7 +27,6 @@ compute.covariances <-
 {
   
   ##  ToDos:
-  ##  - ...$xy durch ...[["xy"]] ersetzen
   
   ##  function computes the covariance matrices of 
   ##  - bhat
@@ -49,6 +48,7 @@ compute.covariances <-
   ## 2013-02-05 AP covariance matrix of xihat
   ## 2013-04-23 AP new names for robustness weights
   ## 2013-05-06 AP changes for solving estimating equations for xi
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   
   ## adjust flags for computing covariance matrices
@@ -83,18 +83,18 @@ compute.covariances <-
   
   TtT <- as.vector( table( TT ) )
 
-  V <- eta * nugget * Valpha.objects$Valpha 
+  V <- eta * nugget * Valpha.objects[["Valpha"]] 
   VTtT <- t( TtT * V )
   
   ## inverse of G_theta (note that Palpha is not symmetric!!)
-
+  
   Gi <- try( 
-    solve( t(TtT * Valpha.objects$Valpha) + Palpha / ( b * eta ) ),
+    solve( t(TtT * Valpha.objects[["Valpha"]]) + Palpha / ( b * eta ) ),
     silent = TRUE
   )
   
   if( identical( class( Gi ), "try-error" ) ){
-    result.new$error <- TRUE
+    result.new[["error"]] <- TRUE
     return( result.new )            
   }
   
@@ -104,7 +104,7 @@ compute.covariances <-
         cov.bhat.b, cov.bhat.e,
         cov.bhat, cov.bhat.betahat ) ) 
   ){
-    PaGtiVa <- ( Palpha %*% Gi %*% Valpha.objects$Valpha )
+    PaGtiVa <- ( Palpha %*% Gi %*% Valpha.objects[["Valpha"]] )
   }
   
   if( any( c( 
@@ -112,7 +112,7 @@ compute.covariances <-
         cov.betahat, cov.bhat.betahat
       ) ) 
   ){
-    AaGtiVa <- ( Aalpha %*% Gi %*% Valpha.objects$Valpha )
+    AaGtiVa <- ( Aalpha %*% Gi %*% Valpha.objects[["Valpha"]] )
   }
   
   ## covariance of huberized observations
@@ -142,7 +142,7 @@ compute.covariances <-
   
   if( cov.bhat ){
     aux <- tcrossprod( PaGtiVa, cov.b.psi )
-    result.new$cov.bhat <- if( full.cov.bhat )
+    result.new[["cov.bhat"]] <- if( full.cov.bhat )
     {
       aux <- tcrossprod( aux, PaGtiVa )
       attr( aux, "struc" ) <- "sym"
@@ -157,30 +157,30 @@ compute.covariances <-
   ## ... of betahat (debugging status ok)
   
   if( cov.betahat ){
-    result.new$cov.betahat <- tcrossprod( tcrossprod( AaGtiVa, cov.b.psi ), AaGtiVa )
-    attr( result.new$cov.betahat, "struc" ) <- "sym"
+    result.new[["cov.betahat"]] <- tcrossprod( tcrossprod( AaGtiVa, cov.b.psi ), AaGtiVa )
+    attr( result.new[["cov.betahat"]], "struc" ) <- "sym"
   }
   
   ##  ... of bhat and betahat (debugging status ok)
     
   if( cov.bhat.betahat ){
-    result.new$cov.bhat.betahat <- tcrossprod( tcrossprod( PaGtiVa, cov.b.psi ), AaGtiVa )
+    result.new[["cov.bhat.betahat"]] <- tcrossprod( tcrossprod( PaGtiVa, cov.b.psi ), AaGtiVa )
   }
   
   ## ... of (b - bhat) (debugging status ok)
   
   if( cov.delta.bhat ){
-    result.new$cov.delta.bhat <- if( full.cov.delta.bhat )
+    result.new[["cov.delta.bhat"]] <- if( full.cov.delta.bhat )
     {
-      aux <- V + result.new$cov.bhat - cov.bhat.b - t( cov.bhat.b )
+      aux <- V + result.new[["cov.bhat"]] - cov.bhat.b - t( cov.bhat.b )
       attr( aux, "struc" ) <- "sym"
       dimnames( aux ) <- list( rownames( XX ), rownames( XX ) )
       aux
     } else {
       aux <- diag( V ) - 2 * diag( cov.bhat.b ) + (if( full.cov.bhat ){
-        diag( result.new$cov.bhat )
+        diag( result.new[["cov.bhat"]] )
       } else {
-        result.new$cov.bhat
+        result.new[["cov.bhat"]]
       })
       names( aux ) <- rownames( XX )
       aux
@@ -190,18 +190,18 @@ compute.covariances <-
   ## ... of (b - bhat) and betahat (debugging status ok)
   
   if( cov.delta.bhat.betahat ){
-    result.new$cov.delta.bhat.betahat <- t( cov.betahat.b ) - result.new$cov.bhat.betahat
-    dimnames( result.new$cov.delta.bhat.betahat ) <- dimnames( XX )
+    result.new[["cov.delta.bhat.betahat"]] <- t( cov.betahat.b ) - result.new[["cov.bhat.betahat"]]
+    dimnames( result.new[["cov.delta.bhat.betahat"]] ) <- dimnames( XX )
   }
   
   ## ... of ehat (debugging status ok)
  
   if( cov.ehat ){
-    aux1 <- tcrossprod( result.new$cov.delta.bhat.betahat, XX )[TT,TT]
-    result.new$cov.ehat <- if( full.cov.ehat )
+    aux1 <- tcrossprod( result.new[["cov.delta.bhat.betahat"]], XX )[TT,TT]
+    result.new[["cov.ehat"]] <- if( full.cov.ehat )
     {
-      aux <- bla <- result.new$cov.delta.bhat[TT,TT] + 
-        tcrossprod( tcrossprod( XX, result.new$cov.betahat ), XX )[TT,TT] -
+      aux <- bla <- result.new[["cov.delta.bhat"]][TT,TT] + 
+        tcrossprod( tcrossprod( XX, result.new[["cov.betahat"]] ), XX )[TT,TT] -
         aux1 - t(aux1) - cov.bhat.e[TT,] - t(cov.bhat.e)[,TT] - 
         TX.cov.betahat.e - t(TX.cov.betahat.e)
       diag( aux ) <- diag( aux ) + nugget
@@ -210,10 +210,10 @@ compute.covariances <-
       aux   
     } else {
       aux <- (if( full.cov.delta.bhat ){
-        diag( result.new$cov.delta.bhat )[TT] 
+        diag( result.new[["cov.delta.bhat"]] )[TT] 
       } else {
-        result.new$cov.delta.bhat[TT]
-      }) + rowSums( XX * (XX %*% result.new$cov.betahat) )[TT] -
+        result.new[["cov.delta.bhat"]][TT]
+      }) + rowSums( XX * (XX %*% result.new[["cov.betahat"]]) )[TT] -
         2 * diag( aux1 ) - 2 * diag( cov.bhat.e[TT,] ) - 2 * diag( TX.cov.betahat.e ) + 
         nugget
       names( aux ) <- names.yy
@@ -224,9 +224,9 @@ compute.covariances <-
   ## ... of ehat + bhat (debugging status ok)
   
   if( cov.ehat.p.bhat ){
-    result.new$cov.ehat.p.bhat <- if( full.cov.ehat.p.bhat )
+    result.new[["cov.ehat.p.bhat"]] <- if( full.cov.ehat.p.bhat )
     {
-      aux <- tcrossprod( tcrossprod( XX, result.new$cov.betahat ), XX )[TT,TT] - 
+      aux <- tcrossprod( tcrossprod( XX, result.new[["cov.betahat"]] ), XX )[TT,TT] - 
         TX.cov.betahat.bT - t(TX.cov.betahat.bT) -
         TX.cov.betahat.e - t(TX.cov.betahat.e) + V[TT,TT]
       diag( aux ) <- diag( aux ) + nugget
@@ -234,7 +234,7 @@ compute.covariances <-
       dimnames( aux ) <- list( names.yy, names.yy )
       aux   
     } else {
-      aux <- rowSums( XX * (XX %*% result.new$cov.betahat) )[TT] - 
+      aux <- rowSums( XX * (XX %*% result.new[["cov.betahat"]]) )[TT] - 
         2 * diag( TX.cov.betahat.bT ) - 
         2 * diag( TX.cov.betahat.e ) + diag( V )[TT] + nugget
       names( aux ) <- names.yy
@@ -246,8 +246,8 @@ compute.covariances <-
   ## and observations
   
   if( aux.cov.pred.target ){
-    result.new$cov.pred.target <- rbind( cov.bhat.b, cov.betahat.b ) %*%
-      Valpha.objects$Valpha.inverse / eta / nugget
+    result.new[["cov.pred.target"]] <- rbind( cov.bhat.b, cov.betahat.b ) %*%
+      Valpha.objects[["Valpha.inverse"]] / eta / nugget
   }
   
   ##   result <- list( error = FALSE )
@@ -268,7 +268,7 @@ compute.covariances <-
   ##   ##  construct matrix M
   ##   
   ##   TtWiTXX <- TtWiT * XX
-  ##   aux <- Valpha.objects$Valpha.inverse / eta
+  ##   aux <- Valpha.objects[["Valpha.inverse"]] / eta
   ##   diag( aux ) <- diag( aux ) + TtWiT
   ##   
   ##   M <- rbind(
@@ -281,7 +281,7 @@ compute.covariances <-
   ##   M.inverse <- try( solve( M ), silent = TRUE )
   ##   
   ##   if( identical( class( M.inverse ), "try-error" ) ){
-  ##     result$error <- TRUE
+  ##     result[["error"]] <- TRUE
   ##     return( result )            
   ##   }
   ##   
@@ -291,17 +291,17 @@ compute.covariances <-
   ##   QpXS <-  M.inverse[ sel,-sel] + XX %*% M.inverse[-sel,-sel]
   ##   sqrtD <- sqrt( TtDT )
   ##   
-  ##   ValphaiP <- Valpha.objects$Valpha.inverse %*% M.inverse[sel, sel] 
+  ##   ValphaiP <- Valpha.objects[["Valpha.inverse"]] %*% M.inverse[sel, sel] 
   ##   
   ##   if( cov.ehat ){
-  ##     Atildet <- ( -Valpha.objects$Valpha.ilcf %*% t(PpXQt) )[, TT] / eta
+  ##     Atildet <- ( -Valpha.objects[["Valpha.ilcf"]] %*% t(PpXQt) )[, TT] / eta
   ##     B <- ( PpXQt + QpXS %*% t ( XX ) )[TT, TT]
   ##     Bii <- diag( B )
   ##   }
   ##   
   ##   if( cov.ehat.p.bhat ){
-  ##     Ftildet <- ( Valpha.objects$Valpha.ucf + 
-  ##       ( Valpha.objects$Valpha.ilcf %*% M.inverse[ sel,-sel] %*% t(XX) ) / eta )[, TT]
+  ##     Ftildet <- ( Valpha.objects[["Valpha.ucf"]] + 
+  ##       ( Valpha.objects[["Valpha.ilcf"]] %*% M.inverse[ sel,-sel] %*% t(XX) ) / eta )[, TT]
   ##     Gt <- ( QpXS %*% t(XX) )[TT, TT]
   ##     Gii <- diag( Gt )
   ##   }
@@ -321,11 +321,11 @@ compute.covariances <-
   ##     ## compute matrices Mbetastar, Mbstar
   ##     ## debugging status: ok
   ##     
-  ##     Astar <- E.Dbar * Valpha.objects$Valpha
+  ##     Astar <- E.Dbar * Valpha.objects[["Valpha"]]
   ##     diag( Astar ) <- diag( Astar ) + 1. / eta
   ##     Astar <- try( solve( Astar ), silent = TRUE )
   ##     if( identical( class( Astar ), "try-error" ) ){
-  ##       result$error <- TRUE
+  ##       result[["error"]] <- TRUE
   ##       return( result )            
   ##     }
   ##     
@@ -333,14 +333,14 @@ compute.covariances <-
   ##     aux2 <- E.Dbar * XX
   ##     Mbetastar <- try( solve( aux1 %*% aux2 ), silent = TRUE )
   ##     if( identical( class( Mbetastar ), "try-error" ) ){
-  ##       result$error <- TRUE
+  ##       result[["error"]] <- TRUE
   ##       return( result )            
   ##     }
   ##     Mbetastar <- Mbetastar %*% aux1
   ##     
   ##     Mbstar <- -aux2 %*% Mbetastar
   ##     diag( Mbstar ) <- diag( Mbstar ) + 1.
-  ##     Mbstar <- Valpha.objects$Valpha %*% Astar %*% Mbstar
+  ##     Mbstar <- Valpha.objects[["Valpha"]] %*% Astar %*% Mbstar
   ##     
   ##     Mestar.t <- (t( XX %*% Mbetastar + Mbstar ))[TT,TT]
   ##     
@@ -352,7 +352,7 @@ compute.covariances <-
   ##   
   ##   ##   ##  zur Kontrolle: Gleichung 37, Vorschlag HRK vom 18. Januar 2011
   ##   ##   
-  ##   ##   t.bla <- diag( rweights ) %*% Valpha.objects$Valpha %*% diag( rweights ) * eta + diag( rweights )
+  ##   ##   t.bla <- diag( rweights ) %*% Valpha.objects[["Valpha"]] %*% diag( rweights ) * eta + diag( rweights )
   ##   ##   
   ##   ##   t.cov <- nugget * M.inverse %*% rbind(
   ##   ##       cbind( t.bla, t.bla %*% XX ),
@@ -361,7 +361,7 @@ compute.covariances <-
   ##   ##   
   ##   ##   ##  zur Kontrolle: Gleichungen 19, 21 & 22, Entwurf Paper vom 27. Februar 2012
   ##   ##   
-  ##   ##   t.A <- b * Valpha.objects$Valpha
+  ##   ##   t.A <- b * Valpha.objects[["Valpha"]]
   ##   ##   diag( t.A ) <- diag( t.A ) + 1 / eta
   ##   ##   t.A <- solve( t.A )
   ##   ##   
@@ -371,16 +371,16 @@ compute.covariances <-
   ##   ##   
   ##   ##   M.b <- -b * XX %*% M.beta
   ##   ##   diag( M.b ) <- diag( M.b ) + 1.
-  ##   ##   M.b <- Valpha.objects$Valpha %*% t.A %*% M.b
+  ##   ##   M.b <- Valpha.objects[["Valpha"]] %*% t.A %*% M.b
   ##   ##   
-  ##   ##   cov.Db.sigmapsi <- b^2 * nugget * eta * Valpha.objects$Valpha
+  ##   ##   cov.Db.sigmapsi <- b^2 * nugget * eta * Valpha.objects[["Valpha"]]
   ##   ##   diag( cov.Db.sigmapsi ) <- diag( cov.Db.sigmapsi ) + nugget * a
   ##   ##   
   ##   ##   ## Kontrolle der Gleichungen 19, 21 & 22, Entwurf Paper vom 24. Februar 2012
   ##   ##   
-  ##   ##   t.A <- b * Valpha.objects$Valpha * eta
+  ##   ##   t.A <- b * Valpha.objects[["Valpha"]] * eta
   ##   ##   diag( t.A ) <- diag( t.A ) + 1.
-  ##   ##   t.A <- Valpha.objects$Valpha %*% solve( t.A ) * eta
+  ##   ##   t.A <- Valpha.objects[["Valpha"]] %*% solve( t.A ) * eta
   ##   ##   
   ##   ##   t.B <- -b * t.A
   ##   ##   diag( t.B ) <- diag( t.B ) + 1.
@@ -393,7 +393,7 @@ compute.covariances <-
   ##   ##   diag( M.b ) <- diag( M.b ) + 1.
   ##   ##   M.b <- t.A %*% M.b
   ##   ##   
-  ##   ##   cov.Db.sigmapsi <- b^2 * nugget * eta * Valpha.objects$Valpha
+  ##   ##   cov.Db.sigmapsi <- b^2 * nugget * eta * Valpha.objects[["Valpha"]]
   ##   ##   diag( cov.Db.sigmapsi ) <- diag( cov.Db.sigmapsi ) + nugget * a
   ##   
   ##   ##  ... of bhat (debugging status: ok)
@@ -408,15 +408,15 @@ compute.covariances <-
   ##       
   ##       ##  full matrix
   ##       
-  ##       result$cov.bhat <- nugget * (
-  ##         crossprod( Valpha.objects$Valpha.ucf %*% aux ) * eta +
+  ##       result[["cov.bhat"]] <- nugget * (
+  ##         crossprod( Valpha.objects[["Valpha.ucf"]] %*% aux ) * eta +
   ##         crossprod( sqrtD * PpXQt )
   ##       )
-  ##       attr( result$cov.bhat, "struc" ) <- "sym"
+  ##       attr( result[["cov.bhat"]], "struc" ) <- "sym"
   ##       
   ##       ##       ##  zur Kontrolle: Kovarianzmatrix UK-Vorhersage
   ##       ##       
-  ##       ##       t.V <- ( nugget * eta ) * Valpha.objects$Valpha
+  ##       ##       t.V <- ( nugget * eta ) * Valpha.objects[["Valpha"]]
   ##       ##       t.Sigma <- t.V + nugget * diag( n )
   ##       ##       t.iSigma <- solve( t.Sigma )
   ##       ##       
@@ -424,28 +424,28 @@ compute.covariances <-
   ##       ##           t( XX ) %*% t.iSigma %*% XX 
   ##       ##       ) %*% t(XX) %*% t.iSigma %*% t.V
   ##       ##       
-  ##       ##       print( summary( c( result$cov.bhat - t.cov.bhat ) ) )
+  ##       ##       print( summary( c( result[["cov.bhat"]] - t.cov.bhat ) ) )
   ##       ##             
   ##       ##       ## zur Kontrolle: Gleichung 21, Entwurf Paper vom 9. Februar
   ##       ##       
   ##       ##       t.cov <- M.b %*% cov.Db.sigmapsi %*% t( M.b )
   ##       ##       
   ##       ##       cat( "bhat\n" )
-  ##       ##       print( summary( c( result$cov.bhat - t.cov ) ) )
+  ##       ##       print( summary( c( result[["cov.bhat"]] - t.cov ) ) )
   ##       
   ##     } else {
   ##       
   ##       ##  diagonal elements only
   ##       
-  ##       result$cov.bhat <- nugget * (
+  ##       result[["cov.bhat"]] <- nugget * (
   ##         colSums( 
   ##           drop( 
-  ##             Valpha.objects$Valpha.ucf %*% aux 
+  ##             Valpha.objects[["Valpha.ucf"]] %*% aux 
   ##           )^2
   ##         ) * eta + colSums( (sqrtD * PpXQt)^2 )
   ##       )
   ##       
-  ##       ##       print( summary( result$cov.bhat - diag( t.cov.bhat ) ) )
+  ##       ##       print( summary( result[["cov.bhat"]] - diag( t.cov.bhat ) ) )
   ##       
   ##     }
   ##     
@@ -456,28 +456,28 @@ compute.covariances <-
   ##   
   ##   if( cov.betahat ){
   ##     
-  ##     result$cov.betahat <- nugget * (
+  ##     result[["cov.betahat"]] <- nugget * (
   ##       crossprod(
-  ##         Valpha.objects$Valpha.ilcf %*% M.inverse[sel, -sel]
+  ##         Valpha.objects[["Valpha.ilcf"]] %*% M.inverse[sel, -sel]
   ##       ) / eta + crossprod( sqrtD * QpXS )
   ##     )
   ##     
-  ##     attr( result$cov.betahat, "struc" ) <- "sym"
+  ##     attr( result[["cov.betahat"]], "struc" ) <- "sym"
   ##   
   ##     
   ##     ##     ##  zur Kontrolle: Kovarianzmatrix der GLS Schaetzung
   ##     ##     
-  ##     ##     t.V <- nugget * eta * Valpha.objects$Valpha
+  ##     ##     t.V <- nugget * eta * Valpha.objects[["Valpha"]]
   ##     ##     t.Sigma <- t.V + nugget * diag( n )
   ##     ##     t.iSigma <- solve( t.Sigma )
   ##     ##     t.cov.betahat <- solve( t(XX) %*% t.iSigma %*% XX )
-  ##     ##     print( summary( c( result$cov.betahat - t.cov.betahat ) ) )
+  ##     ##     print( summary( c( result[["cov.betahat"]] - t.cov.betahat ) ) )
   ##     ##     
   ##     ##     ##  zur Kontrolle: Gleichung 22, Entwurf Paper Februar 2012
   ##     ##     
   ##     ##     t.cov <- M.beta %*% cov.Db.sigmapsi %*% t( M.beta )
   ##     ##     cat( "betahat\n" )
-  ##     ##     print( summary( c( result$cov.betahat - t.cov ) ) )
+  ##     ##     print( summary( c( result[["cov.betahat"]] - t.cov ) ) )
   ##     
   ##   }
   ##   
@@ -488,14 +488,14 @@ compute.covariances <-
   ##     
   ##     aux <- t(ValphaiP) / eta
   ##     diag( aux ) <- diag( aux ) - 1
-  ##     result$cov.bhat.betahat <- nugget * (
+  ##     result[["cov.bhat.betahat"]] <- nugget * (
   ##       aux %*% M.inverse[sel,-sel] +
   ##       crossprod( PpXQt, TtDT * QpXS )
   ##     )
   ##     
-  ##     ##     print( summary( result$cov.bhat.betahat ) )
+  ##     ##     print( summary( result[["cov.bhat.betahat"]] ) )
   ##     ##     print( summary( t.cov[(1:n), -(1:n)] ) )
-  ##     ##     print( summary( c( result$cov.bhat.betahat - t.cov[(1:n), -(1:n)] ) ) )
+  ##     ##     print( summary( c( result[["cov.bhat.betahat"]] - t.cov[(1:n), -(1:n)] ) ) )
   ##     
   ##   }
   ##   
@@ -508,18 +508,18 @@ compute.covariances <-
   ##       
   ##       ##  full matrix
   ##       
-  ##       result$cov.delta.bhat <- nugget * ( 
+  ##       result[["cov.delta.bhat"]] <- nugget * ( 
   ##         M.inverse[sel, sel] %*% ValphaiP / eta +
   ##         crossprod( sqrtD * PpXQt )
   ##       )
-  ##       dimnames( result$cov.delta.bhat ) <- list(
+  ##       dimnames( result[["cov.delta.bhat"]] ) <- list(
   ##         rownames( XX ), rownames( XX )
   ##       )
-  ##       attr( result$cov.delta.bhat, "struc" ) <- "sym"
+  ##       attr( result[["cov.delta.bhat"]], "struc" ) <- "sym"
   ##       
   ##       ##       ##  zur Kontrolle: Kovarianzmatrix UK-Vorhersagefehler
   ##       ##       
-  ##       ##       t.V <- nugget * eta * Valpha.objects$Valpha
+  ##       ##       t.V <- nugget * eta * Valpha.objects[["Valpha"]]
   ##       ##       t.Sigma <- t.V + nugget * diag( n )
   ##       ##       t.iSigma <- solve( t.Sigma )
   ##       ##       
@@ -527,22 +527,22 @@ compute.covariances <-
   ##       ##         t( XX ) %*% t.iSigma %*% XX 
   ##       ##       ) %*% t(XX) %*% t.iSigma %*% t.V
   ##       ##       
-  ##       ##       print( summary( c( result$cov.delta.bhat - t.cov.delta.bhat ) ) )
+  ##       ##       print( summary( c( result[["cov.delta.bhat"]] - t.cov.delta.bhat ) ) )
   ##       
   ##     } else {
   ##       
   ##       ##  diagonal elements only 
   ##       
-  ##       result$cov.delta.bhat <- nugget * (
+  ##       result[["cov.delta.bhat"]] <- nugget * (
   ##         colSums( 
   ##           drop( 
-  ##             Valpha.objects$Valpha.ilcf %*% M.inverse[sel, sel] 
+  ##             Valpha.objects[["Valpha.ilcf"]] %*% M.inverse[sel, sel] 
   ##           )^2
   ##         ) / eta + colSums( (sqrtD * PpXQt)^2 )
   ##       )
-  ##       names( result$cov.delta.bhat ) <- rownames( XX )
+  ##       names( result[["cov.delta.bhat"]] ) <- rownames( XX )
   ##       
-  ##       ##       print( summary( c( result$cov.delta.bhat - diag( t.cov.delta.bhat ) ) ) )
+  ##       ##       print( summary( c( result[["cov.delta.bhat"]] - diag( t.cov.delta.bhat ) ) ) )
   ##   
   ##     }
   ##     
@@ -553,14 +553,14 @@ compute.covariances <-
   ##   
   ##   if( cov.delta.bhat.betahat ){
   ##     
-  ##     result$cov.delta.bhat.betahat <- -nugget * (
+  ##     result[["cov.delta.bhat.betahat"]] <- -nugget * (
   ##       t(ValphaiP) %*% M.inverse[sel,-sel] / eta +
   ##       crossprod( PpXQt, TtDT * QpXS )
   ##     )
   ##     
   ##     ##     ## zur Kontrolle: Kovarianzmatrix UK-Vorhersagefehler und betagls
   ##     ##     
-  ##     ##     t.V <- nugget * eta * Valpha.objects$Valpha
+  ##     ##     t.V <- nugget * eta * Valpha.objects[["Valpha"]]
   ##     ##     t.Sigma <- t.V + nugget * diag( n )
   ##     ##     t.iSigma <- solve( t.Sigma )
   ##     ##     
@@ -568,7 +568,7 @@ compute.covariances <-
   ##     ##         t( XX ) %*% t.iSigma %*% XX
   ##     ##     )
   ##     ##     
-  ##     ##     print( summary( c( result$cov.delta.bhat.betahat - t.cov.delta.bhat.betahat ) ) )
+  ##     ##     print( summary( c( result[["cov.delta.bhat.betahat"]] - t.cov.delta.bhat.betahat ) ) )
   ##     
   ##   }
   ##   
@@ -586,35 +586,35 @@ compute.covariances <-
   ##         2 * b * B
   ##       diag( aux ) <- diag( aux ) + 1
   ##       
-  ##       result$cov.ehat <- nugget * aux
+  ##       result[["cov.ehat"]] <- nugget * aux
   ##       
-  ##       dimnames( result$cov.ehat ) <- list( names.yy, names.yy )
-  ##       attr( result$cov.ehat, "struc" ) <- "sym"
+  ##       dimnames( result[["cov.ehat"]] ) <- list( names.yy, names.yy )
+  ##       attr( result[["cov.ehat"]], "struc" ) <- "sym"
   ##       
   ##       
   ##       ##       ##  zur Kontrolle Kovarianzmatrix von ehat fuer nicht robusten Fall
   ##       ##       
-  ##       ##       t.V <- nugget * eta * Valpha.objects$Valpha
+  ##       ##       t.V <- nugget * eta * Valpha.objects[["Valpha"]]
   ##       ##       t.sigma <- t.V + nugget * diag( n )
   ##       ##       t.isigma <- solve( t.sigma )
   ##       ##       t.A <- t.sigma - XX %*% solve( t(XX) %*% t.isigma %*% XX ) %*% t(XX )
   ##       ##       t.cov.ehat <- nugget^2 * t.isigma %*% t.A %*% t.isigma
   ##       ##       
-  ##       ##       print( summary( c( result$cov.ehat - t.cov.ehat ) ) )
+  ##       ##       print( summary( c( result[["cov.ehat"]] - t.cov.ehat ) ) )
   ##       
   ##     } else {
   ##       
   ##       ##  diagonal elements only
   ##       
-  ##       result$cov.ehat <- nugget * (
+  ##       result[["cov.ehat"]] <- nugget * (
   ##         1 + eta * colSums( Atildet^2 ) + 
   ##         a * colSums( B^2 ) -
   ##         2 * b * Bii
   ##       )
   ##       
-  ##       names( result$cov.ehat ) <- names.yy
+  ##       names( result[["cov.ehat"]] ) <- names.yy
   ##       
-  ##       ##       print( summary( c( result$cov.ehat - diag(t.cov.ehat) ) ) )
+  ##       ##       print( summary( c( result[["cov.ehat"]] - diag(t.cov.ehat) ) ) )
   ##       
   ##     }
   ##   }
@@ -634,34 +634,34 @@ compute.covariances <-
   ##         b * ( Gt + t(Gt) )
   ##       diag( aux ) <- diag( aux ) + 1.
   ##       
-  ##       result$cov.ehat.p.bhat <- nugget * aux
+  ##       result[["cov.ehat.p.bhat"]] <- nugget * aux
   ##       
-  ##       dimnames( result$cov.ehat.p.bhat ) <- list( names.yy, names.yy )
-  ##       attr( result$cov.ehat.p.bhat, "struc" ) <- "sym"
+  ##       dimnames( result[["cov.ehat.p.bhat"]] ) <- list( names.yy, names.yy )
+  ##       attr( result[["cov.ehat.p.bhat"]], "struc" ) <- "sym"
   ##       
   ##       
   ##       
   ##       ##  zur Kontrolle Kovarianzmatrix von ehat.p.bhat fuer nicht robusten Fall
   ##       
-  ##       t.V <- nugget * eta * Valpha.objects$Valpha
+  ##       t.V <- nugget * eta * Valpha.objects[["Valpha"]]
   ##       t.sigma <- t.V + nugget * diag( n )
   ##       t.isigma <- solve( t.sigma )
   ##       t.A <- t.sigma - XX %*% solve( t(XX) %*% t.isigma %*% XX ) %*% t(XX )
-  ##       ##       print( summary( c( result$cov.ehat.p.bhat -  t.A ) ) )
+  ##       ##       print( summary( c( result[["cov.ehat.p.bhat"]] -  t.A ) ) )
   ##       
   ##     } else {
   ##       
   ##       ##  diagonal elements only
   ##       
-  ##       result$cov.ehat.p.bhat <- nugget * (
+  ##       result[["cov.ehat.p.bhat"]] <- nugget * (
   ##         1. + eta * colSums( Ftildet^2 ) + 
   ##           a * colSums( Gt^2 ) -
   ##           2 * b * Gii
   ##       )
   ##       
-  ##       names( result$cov.ehat.p.bhat ) <- names.yy
+  ##       names( result[["cov.ehat.p.bhat"]] ) <- names.yy
   ##       
-  ##       ##      print( summary( c( result$cov.ehat.p.bhat - diag( t.A ) ) ) )
+  ##       ##      print( summary( c( result[["cov.ehat.p.bhat"]] - diag( t.A ) ) ) )
   ##       
   ##     }
   ##     
@@ -676,9 +676,9 @@ compute.covariances <-
   ##     
   ##     aux <- -t(ValphaiP) / eta
   ##     diag( aux ) <- diag( aux ) + 1.
-  ##     result$cov.pred.target <- rbind(
+  ##     result[["cov.pred.target"]] <- rbind(
   ##       aux,
-  ##       -M.inverse[ -sel, sel] %*% Valpha.objects$Valpha.inverse / eta
+  ##       -M.inverse[ -sel, sel] %*% Valpha.objects[["Valpha.inverse"]] / eta
   ##     )
   ##   }
   ##   
@@ -691,14 +691,14 @@ compute.covariances <-
   ##   ##   diag( aux1 ) <- diag( aux1 ) + TtT
   ##   ##   aux1 <- try( solve( aux1 ), silent = TRUE )
   ##   ##   
-  ##   ##   aux2 <- TtT * t( TtT * Valpha.objects$Valpha )
+  ##   ##   aux2 <- TtT * t( TtT * Valpha.objects[["Valpha"]] )
   ##   ##   diag( aux2 ) <- diag( aux2 ) + l2 * TtT
   ##   ##   
   ##   ##   t.cov.xihat <- aux1 %*% aux2 %*% aux1 * eta * nugget
   ##   ##   
   ##   ##   t.cov.bhat <- Palpha %*% t.cov.xihat %*% t( Palpha )
   ##   ##   
-  ##   ##   print( summary( c( t.cov.bhat - result$cov.bhat ) ) )
+  ##   ##   print( summary( c( t.cov.bhat - result[["cov.bhat"]] ) ) )
   ##   ##   
   ##   ##   stop()
   ##   
@@ -730,6 +730,7 @@ update.xihat <-
 {
   
   ## 2013-02-04 AP solving estimating equations for xi
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   ## function computes (1) updated IRWLS estimates xihat of linearized
   ## normal equations, (2) the associated rweights,
@@ -746,7 +747,7 @@ update.xihat <-
   ##  linear equation system
   
   Wi <- ifelse( 
-    abs( std.res ) < sqrt( .Machine$double.eps ),
+    abs( std.res ) < sqrt( .Machine[["double.eps"]] ),
     1.,
     psi.function( std.res, tuning.psi ) / std.res
   )
@@ -783,10 +784,10 @@ update.xihat <-
     
     ##  collect output
     
-    result$error      <- FALSE
-    result$xihat      <- r.solve
-    result$residuals  <- yy - result$xihat[TT]
-    result$rweights   <- Wi
+    result[["error"]]      <- FALSE
+    result[["xihat"]]      <- r.solve
+    result[["residuals"]]  <- yy - result[["xihat"]][TT]
+    result[["rweights"]]   <- Wi
     
   }
   
@@ -808,6 +809,7 @@ estimate.xihat <-
   
   ## 2013-02-04 AP solving estimating equations for xi
   ## 2013-06-03 AP handling design matrices with rank < ncol(x)
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
    
   ## function computes (1) estimates xihat, bhat, betahat by
   ## solving robustified estimating equations by IRWLS,
@@ -840,43 +842,42 @@ estimate.xihat <-
   
   if( rankdef.x ){
     s <- svd( aux %*% XX )
-    s$d <- ifelse( s$d / max( s$d ) <= min.condnum, 0., 1. / s$d )
-    Palpha <- s$v %*% ( s$d * t( s$u ) )                # Moore-Penrose inverse
+    s[["d"]] <- ifelse( s[["d"]] / max( s[["d"]] ) <= min.condnum, 0., 1. / s[["d"]] )
+    Palpha <- s[["v"]] %*% ( s[["d"]] * t( s[["u"]] ) )                # Moore-Penrose inverse
   } else {
     t.chol <- try( chol( aux %*% XX ), silent = TRUE )
     if( !identical( class( t.chol ), "try-error" ) ){
       Palpha <- chol2inv( t.chol )    
     } else {
-      result$error <- TRUE
+      result[["error"]] <- TRUE
       return( result )    
     }
   }
   
-  result$Aalpha             <- Palpha %*% aux
-  dimnames( result$Aalpha ) <- dimnames( t(XX) )
+  result[["Aalpha"]]             <- Palpha %*% aux
+  dimnames( result[["Aalpha"]] ) <- dimnames( t(XX) )
   
-  result$Palpha             <- -XX %*% result$Aalpha
-  diag( result$Palpha )     <- diag( result$Palpha ) + 1.
-  rownames( result$Palpha ) <- rownames( XX )
-  colnames( result$Palpha ) <- rownames( XX )
-  attr( result$Palpha, "struc" ) <- "sym"
+  result[["Palpha"]]             <- -XX %*% result[["Aalpha"]]
+  diag( result[["Palpha"]] )     <- diag( result[["Palpha"]] ) + 1.
+  rownames( result[["Palpha"]] ) <- rownames( XX )
+  colnames( result[["Palpha"]] ) <- rownames( XX )
   
-  result$Valpha.inverse.Palpha <- Valpha.inverse %*% result$Palpha
-  rownames( result$Valpha.inverse.Palpha ) <- rownames( XX )
-  colnames( result$Valpha.inverse.Palpha ) <- rownames( XX )
+  result[["Valpha.inverse.Palpha"]] <- Valpha.inverse %*% result[["Palpha"]]
+  rownames( result[["Valpha.inverse.Palpha"]] ) <- rownames( XX )
+  colnames( result[["Valpha.inverse.Palpha"]] ) <- rownames( XX )
   
   ##  initialization
   
   res <- yy - xihat[TT]
   
   eeq.old <- f.eeq(     
-    res, TT, xihat, nugget, eta, result$Valpha.inverse.Palpha, 
+    res, TT, xihat, nugget, eta, result[["Valpha.inverse.Palpha"]], 
     psi.function, tuning.psi
   )
   eeq.old.l2 <- sum( eeq.old^2 )
 
   if( !is.finite( eeq.old.l2 ) ) {
-    result$error <- TRUE
+    result[["error"]] <- TRUE
     return( result )
   }
   
@@ -896,13 +897,13 @@ estimate.xihat <-
     new <- update.xihat(
       XX, yy, res, TT, 
       nugget, eta, 
-      result$Valpha.inverse.Palpha,
+      result[["Valpha.inverse.Palpha"]],
       psi.function, tuning.psi, 
       verbose
     )
     
-    if( new$error ) {
-      result$error <- TRUE
+    if( new[["error"]] ) {
+      result[["error"]] <- TRUE
       return( result )
     }
     
@@ -910,13 +911,13 @@ estimate.xihat <-
     ##  evaluate estimating equations for xi and compute its l2 norm
     
     eeq.new <- f.eeq(       
-      new$residuals, TT, new$xihat, nugget, eta, result$Valpha.inverse.Palpha, 
+      new[["residuals"]], TT, new[["xihat"]], nugget, eta, result[["Valpha.inverse.Palpha"]], 
       psi.function, tuning.psi
     )
     eeq.new.l2 <- sum( eeq.new^2 )
     
     if( !is.finite( eeq.new.l2 ) ) {
-      result$error <- TRUE
+      result[["error"]] <- TRUE
       return( result )
     }
     
@@ -931,7 +932,7 @@ estimate.xihat <-
     
     ##  check for convergence (cf. help( optim ) )
 
-    if( max( abs( res - new$residuals ) ) < sqrt(  reltol ) * sqrt( nugget ) ) {
+    if( max( abs( res - new[["residuals"]] ) ) < sqrt(  reltol ) * sqrt( nugget ) ) {
       converged <- TRUE
       break
     }
@@ -939,27 +940,27 @@ estimate.xihat <-
     ##  update xihat, residuals and eeq.old.l2
     
     eeq.old.l2 <- eeq.new.l2
-    xihat      <- new$xihat
-    res        <- new$residuals
+    xihat      <- new[["xihat"]]
+    res        <- new[["residuals"]]
     
   }
   
   ##  collect output
   
-  result$xihat            <- new$xihat
-  names( result$xihat )   <- rownames( XX )
+  result[["xihat"]]            <- new[["xihat"]]
+  names( result[["xihat"]] )   <- rownames( XX )
   
-  result$bhat             <- drop( result$Palpha %*% result$xihat )
-  names( result$bhat )    <- rownames( XX )
+  result[["bhat"]]             <- drop( result[["Palpha"]] %*% result[["xihat"]] )
+  names( result[["bhat"]] )    <- rownames( XX )
   
-  result$betahat          <- drop( result$Aalpha %*% result$xihat )
-  names( result$betahat ) <- colnames( XX )
+  result[["betahat"]]          <- drop( result[["Aalpha"]] %*% result[["xihat"]] )
+  names( result[["betahat"]] ) <- colnames( XX )
   
-  result$residuals        <- new$residuals
-  result$rweights         <- new$rweights
-  result$z.star           <- drop( Valpha.inverse %*% result$bhat )
-  result$converged        <- converged
-  result$nit              <- i
+  result[["residuals"]]        <- new[["residuals"]]
+  result[["rweights"]]         <- new[["rweights"]]
+  result[["z.star"]]           <- drop( Valpha.inverse %*% result[["bhat"]] )
+  result[["converged"]]        <- converged
+  result[["nit"]]              <- i
   
   return( result )
   
@@ -972,7 +973,7 @@ gcr <-
   function( 
     x, variogram.model, param, 
     aniso, 
-    irf.models = georob.control()$irf.models,
+    irf.models = georob.control()[["irf.models"]],
     verbose
   )
 {
@@ -986,12 +987,13 @@ gcr <-
   
   ##  2011-12-27 ap
   ##  2012-02-07 AP modified for geometrically anisotropic variograms
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   result <- list( error = TRUE )
   
   ## matrix for coordinate transformation
   
-  A <- aniso$sclmat * aniso$rotmat / param["scale"]
+  A <- aniso[["sclmat"]] * aniso[["rotmat"]] / param["scale"]
   
   model.list <- list( variogram.model )
   model.list <- c( model.list, as.list( param[-(1:4)] ) )
@@ -1021,7 +1023,7 @@ gcr <-
     attr( Valpha0, "struc" ) <- "sym"
     
     Valpha <- Valpha0
-    Valpha$tri <- ps * ( Valpha$tri + 1. ) - 1.
+    Valpha[["tri"]] <- ps * ( Valpha[["tri"]] + 1. ) - 1.
     
     Valpha0 <- expand( Valpha0 )
     Valpha  <- expand( Valpha )
@@ -1037,10 +1039,10 @@ gcr <-
     
     ##  collect results
     
-    result$error        <- FALSE
-    result$gcr.constant <- gcr.constant.Valpha
-    result$Valpha0          <- Valpha0 + gcr.constant.Valpha0  # correlation matrix that does not contain spatial nugget
-    result$Valpha           <- Valpha  + gcr.constant.Valpha   # correlation matrix that includes spatial nugget
+    result[["error"]]        <- FALSE
+    result[["gcr.constant"]] <- gcr.constant.Valpha
+    result[["Valpha0"]]          <- Valpha0 + gcr.constant.Valpha0  # correlation matrix that does not contain spatial nugget
+    result[["Valpha"]]           <- Valpha  + gcr.constant.Valpha   # correlation matrix that includes spatial nugget
     
   } else {
     
@@ -1080,6 +1082,7 @@ prepare.likelihood.calculations <-
   ## 2012-11-27 AP changes in parameter back-transformation
   ## 2012-11-27 AP changes in check allowed parameter range
   ## 2013-02-04 AP solving estimating equations for xi
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   ##  function transforms (1) the variogram parameters back to their
   ##  original scale; computes (2) the correlation matrix, its inverse
@@ -1117,8 +1120,8 @@ prepare.likelihood.calculations <-
   
   if( 
     isTRUE( 
-      all.equal( c( param, aniso ), c( lik.item$param, lik.item$aniso$aniso ) ) 
-    ) && !( compute.Q && is.null( lik.item$Q ) )
+      all.equal( c( param, aniso ), c( lik.item[["param"]], lik.item[["aniso"]][["aniso"]] ) ) 
+    ) && !( compute.Q && is.null( lik.item[["Q"]] ) )
   ) {
     
     ##  return the result of the previous call if the variogram
@@ -1134,12 +1137,12 @@ prepare.likelihood.calculations <-
     ## check whether variogram parameters are within reasonalble bounds and
     ## return an error otherwise
     
-    lik.item$Valpha$error <- TRUE
+    lik.item[["Valpha"]][["error"]] <- TRUE
     
     if( any( c( param, aniso ) > safe.param ) ){
       if( verbose > 1 ){
         t.param <- param
-        if( !lik.item$aniso$isotropic ) t.param <- c( t.param, aniso )
+        if( !lik.item[["aniso"]][["isotropic"]] ) t.param <- c( t.param, aniso )
         if( verbose > 1 ) {
           cat( "\n" )
           print( signif( t.param ) )
@@ -1169,14 +1172,14 @@ prepare.likelihood.calculations <-
     
     ##  update variogram and parameters and compute eta
     
-    lik.item$param <- param
-    lik.item$eta <- sum( param[c( "variance", "snugget" )] ) / param["nugget"] 
+    lik.item[["param"]] <- param
+    lik.item[["eta"]] <- sum( param[c( "variance", "snugget" )] ) / param["nugget"] 
     
     ##  update anisotropy parameters and compute the coordinate
     ##  transformation matrices
     
-    lik.item$aniso$aniso <- aniso
-    lik.item$aniso$sincos <- list(
+    lik.item[["aniso"]][["aniso"]] <- aniso
+    lik.item[["aniso"]][["sincos"]] <- list(
       co = unname( cos( aniso["omega"] ) ),
       so = unname( sin( aniso["omega"] ) ),
       cp = unname( cos( aniso["phi"] ) ),
@@ -1189,8 +1192,8 @@ prepare.likelihood.calculations <-
     
     if( n <= 3 ){
       
-#       lik.item$aniso$rotmat <- with( 
-#         lik.item$aniso$sincos,
+#       lik.item[["aniso"]][["rotmat"]] <- with( 
+#         lik.item[["aniso"]][["sincos"]],
 #         rbind(
 #           c(             cp*so,             cp*co,       sp ),
 #           c( -cz*co + sz*sp*so,  co*sz*sp + cz*so,   -cp*sz ),
@@ -1198,8 +1201,8 @@ prepare.likelihood.calculations <-
 #         )[ 1:n, 1:n, drop = FALSE ]
 #       )
       
-      lik.item$aniso$rotmat <- with( 
-        lik.item$aniso$sincos,
+      lik.item[["aniso"]][["rotmat"]] <- with( 
+        lik.item[["aniso"]][["sincos"]],
         rbind(
           c(             sp*so,             sp*co,       cp ),
           c( -cz*co + sz*cp*so,  co*sz*cp + cz*so,   -sp*sz ),
@@ -1208,17 +1211,17 @@ prepare.likelihood.calculations <-
       )
       
       
-      lik.item$aniso$sclmat <- 1. / c( 1., aniso[ c("f1", "f2") ] )[ 1:n ]
+      lik.item[["aniso"]][["sclmat"]] <- 1. / c( 1., aniso[ c("f1", "f2") ] )[ 1:n ]
       
     } else {  # only isotropic case for n > 3
       
-      lik.item$aniso$rotmat <- diag( n )
-      lik.item$aniso$sclmat <- rep( 1., n )
+      lik.item[["aniso"]][["rotmat"]] <- diag( n )
+      lik.item[["aniso"]][["sclmat"]] <- rep( 1., n )
       
     }
     
-    t.param <- lik.item$param
-    if( !lik.item$aniso$isotropic ) t.param <- c( t.param, lik.item$aniso$aniso )
+    t.param <- lik.item[["param"]]
+    if( !lik.item[["aniso"]][["isotropic"]] ) t.param <- c( t.param, lik.item[["aniso"]][["aniso"]] )
     if( verbose > 1 ) {
       cat( "\n" )
       print( signif( t.param ) )
@@ -1229,45 +1232,45 @@ prepare.likelihood.calculations <-
     
     cormat <- gcr(
       x = lag.vectors, variogram.model = variogram.model, param = param, 
-      aniso = lik.item$aniso, verbose = verbose
+      aniso = lik.item[["aniso"]], verbose = verbose
     )
     
-    if( cormat$error ) return( lik.item )
+    if( cormat[["error"]] ) return( lik.item )
     
-    t.vchol <- try( chol( cormat$Valpha ), silent = TRUE )
+    t.vchol <- try( chol( cormat[["Valpha"]] ), silent = TRUE )
     
 #     print( identical( class( t.vchol ), "try-error" ) )
 #     
     if( !identical( class( t.vchol ), "try-error" ) ) {
 
-      lik.item$Valpha$error         <- FALSE
-      lik.item$Valpha$gcr.constant  <- cormat$gcr.constant
-      lik.item$Valpha$Valpha            <- cormat$Valpha
-      lik.item$Valpha$Valpha0           <- cormat$Valpha0
-      lik.item$Valpha$Valpha.ucf        <- unname( t.vchol )
+      lik.item[["Valpha"]][["error"]]         <- FALSE
+      lik.item[["Valpha"]][["gcr.constant"]]  <- cormat[["gcr.constant"]]
+      lik.item[["Valpha"]][["Valpha"]]            <- cormat[["Valpha"]]
+      lik.item[["Valpha"]][["Valpha0"]]           <- cormat[["Valpha0"]]
+      lik.item[["Valpha"]][["Valpha.ucf"]]        <- unname( t.vchol )
       
-      lik.item$Valpha$Valpha.ilcf       <- try(
+      lik.item[["Valpha"]][["Valpha.ilcf"]]       <- try(
         t( 
           backsolve( 
             t.vchol, 
-            diag( nrow( lik.item$Valpha$Valpha ) ), 
-            k = nrow( lik.item$Valpha$Valpha ) 
+            diag( nrow( lik.item[["Valpha"]][["Valpha"]] ) ), 
+            k = nrow( lik.item[["Valpha"]][["Valpha"]] ) 
           ) 
         ),
         silent = TRUE
       )
-      if( identical( class( lik.item$Valpha$Valpha.ilcf ), "try-error" ) ) {
-        lik.item$Valpha$error <- TRUE
+      if( identical( class( lik.item[["Valpha"]][["Valpha.ilcf"]] ), "try-error" ) ) {
+        lik.item[["Valpha"]][["error"]] <- TRUE
         return( lik.item )
       }
       
-      lik.item$Valpha$Valpha.inverse    <- t( lik.item$Valpha$Valpha.ilcf ) %*% lik.item$Valpha$Valpha.ilcf
+      lik.item[["Valpha"]][["Valpha.inverse"]]    <- t( lik.item[["Valpha"]][["Valpha.ilcf"]] ) %*% lik.item[["Valpha"]][["Valpha.ilcf"]]
       
-      attr( lik.item$Valpha$Valpha, "struc" )         <- "sym"
-      attr( lik.item$Valpha$Valpha0, "struc" )        <- "sym"
-      attr( lik.item$Valpha$Valpha.inverse, "struc" ) <- "sym"
-      attr( lik.item$Valpha$Valpha.ucf, "struc" )     <- "ut"
-      attr( lik.item$Valpha$Valpha.ilcf, "struc" )    <- "lt"
+      attr( lik.item[["Valpha"]][["Valpha"]], "struc" )         <- "sym"
+      attr( lik.item[["Valpha"]][["Valpha0"]], "struc" )        <- "sym"
+      attr( lik.item[["Valpha"]][["Valpha.inverse"]], "struc" ) <- "sym"
+      attr( lik.item[["Valpha"]][["Valpha.ucf"]], "struc" )     <- "ut"
+      attr( lik.item[["Valpha"]][["Valpha.ilcf"]], "struc" )    <- "lt"
       
     } else {
       
@@ -1282,22 +1285,22 @@ prepare.likelihood.calculations <-
     ##  irwls iteration from initial.object or from previous iteration
     
     if( 
-      !irwls.initial && !is.null( lik.item$effects$betahat ) &&  
-      !is.null( lik.item$effects$bhat )
+      !irwls.initial && !is.null( lik.item[["effects"]][["betahat"]] ) &&  
+      !is.null( lik.item[["effects"]][["bhat"]] )
     ){
-      betahat <- lik.item$effects$betahat
-      bhat <- lik.item$effects$bhat
+      betahat <- lik.item[["effects"]][["betahat"]]
+      bhat <- lik.item[["effects"]][["bhat"]]
     }
     
-    lik.item$effects <- estimate.xihat( 
+    lik.item[["effects"]] <- estimate.xihat( 
       XX, min.condnum, rankdef.x, yy, betahat, TT, bhat, 
       psi.function, tuning.psi, tuning.psi.nr, 
       irwls.maxiter, irwls.reltol,
-      lik.item$param["nugget"], lik.item$eta, lik.item$Valpha$Valpha.inverse,
+      lik.item[["param"]]["nugget"], lik.item[["eta"]], lik.item[["Valpha"]][["Valpha.inverse"]],
       verbose
     )      
     
-    if( lik.item$effects$error ) return( lik.item )     ##  an error occurred
+    if( lik.item[["effects"]][["error"]] ) return( lik.item )     ##  an error occurred
     
     ##  compute Q matrix and its Cholesky factor (required for
     ##  non-robust REML estimate)
@@ -1307,7 +1310,7 @@ prepare.likelihood.calculations <-
       ##  diagonal matrix with second derivative of rho function
       
       TtDT <- dpsi.function( 
-        lik.item$effects$residuals / sqrt( lik.item$param["nugget"] ), 
+        lik.item[["effects"]][["residuals"]] / sqrt( lik.item[["param"]]["nugget"] ), 
         tuning.psi = tuning.psi
       )
       
@@ -1318,7 +1321,7 @@ prepare.likelihood.calculations <-
       }
       
       TtDTX <- TtDT * XX
-      aux <-  lik.item$Valpha$Valpha.inverse / lik.item$eta
+      aux <-  lik.item[["Valpha"]][["Valpha.inverse"]] / lik.item[["eta"]]
       diag( aux ) <- diag( aux ) + TtDT
       
       ##  compute matrix Q
@@ -1326,19 +1329,19 @@ prepare.likelihood.calculations <-
       Q <- rbind( 
         cbind( aux,      TtDTX                 ),
         cbind( t(TtDTX), crossprod( XX, TtDTX) )
-      ) / lik.item$param["nugget"]
+      ) / lik.item[["param"]]["nugget"]
       
-      lik.item$Q <- list( error = TRUE )
+      lik.item[["Q"]] <- list( error = TRUE )
       
       if( rankdef.x ){
         
         ## compute log(pseudo.det(Q)) and (Moore-Penrose) pseudo inverse of Q by svd
         
-        lik.item$Q$error <- FALSE
+        lik.item[["Q"]][["error"]] <- FALSE
         s <- svd( Q )
-        lik.item$Q$log.det.Q <- sum( log( s$d[s$d / max( s$d ) > min.condnum] ) )
-        s$d <- ifelse( s$d / max( s$d ) <= min.condnum, 0., 1. / s$d )
-        lik.item$Q$Q.inverse <- s$v %*% ( s$d * t( s$u ) )
+        lik.item[["Q"]][["log.det.Q"]] <- sum( log( s[["d"]][s[["d"]] / max( s[["d"]] ) > min.condnum] ) )
+        s[["d"]] <- ifelse( s[["d"]] / max( s[["d"]] ) <= min.condnum, 0., 1. / s[["d"]] )
+        lik.item[["Q"]][["Q.inverse"]] <- s[["v"]] %*% ( s[["d"]] * t( s[["u"]] ) )
         
       } else {
         
@@ -1348,9 +1351,9 @@ prepare.likelihood.calculations <-
         
         if( !identical( class( t.chol ), "try-error" ) ) {
           
-          lik.item$Q$error <- FALSE
-          lik.item$Q$log.det.Q <- 2 * sum( log( diag( t.chol) ) )
-          lik.item$Q$Q.inverse <- chol2inv( t.chol )
+          lik.item[["Q"]][["error"]] <- FALSE
+          lik.item[["Q"]][["log.det.Q"]] <- 2 * sum( log( diag( t.chol) ) )
+          lik.item[["Q"]][["Q.inverse"]] <- chol2inv( t.chol )
           
         } else {
           
@@ -1403,15 +1406,16 @@ dcorr.dparam <-
   ##  2012-01-24 ap cauchytbm and lgd1 models added
   ##  2012-01-25 ap extra model parameter with same names as in Variogram{RandomFields}
   ##  2012-02-07 AP modified for geometrically anisotropic variograms
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
-  aniso.name <- names( aniso$aniso )
+  aniso.name <- names( aniso[["aniso"]] )
   alpha <- unname( param["scale"] )
   n = NCOL( x )
-  aux <- aniso$rotmat %*% t(x)
+  aux <- aniso[["rotmat"]] %*% t(x)
   
   ## scaled lag distance
   
-  hs <- sqrt( colSums( ( aniso$sclmat * aux )^2 ) ) / alpha
+  hs <- sqrt( colSums( ( aniso[["sclmat"]] * aux )^2 ) ) / alpha
   
   ## partial derivatives of scaled lag distance with respect to
   ## anisotropy parameters
@@ -1422,19 +1426,19 @@ dcorr.dparam <-
     
     f1 = {
       colSums(
-        ( c( 0., -1. / aniso$aniso["f1"]^2, 0. )[1:n] * aniso$sclmat ) * aux^2 
+        ( c( 0., -1. / aniso[["aniso"]]["f1"]^2, 0. )[1:n] * aniso[["sclmat"]] ) * aux^2 
       )
     },
     
     f2 = { 
       colSums(
-        ( c( 0., 0., -1. / aniso$aniso["f2"]^2 )[1:n] * aniso$sclmat ) * aux^2 
+        ( c( 0., 0., -1. / aniso[["aniso"]]["f2"]^2 )[1:n] * aniso[["sclmat"]] ) * aux^2 
       )
     },
     
 #     omega = {
 #       drotmat <- with(
-#         aniso$sincos,
+#         aniso[["sincos"]],
 #         rbind(
 #           c(             cp*co,            -cp*so, 0. ),
 #           c(  co*sz*sp + cz*so,  cz*co - sz*sp*so, 0. ),
@@ -1442,13 +1446,13 @@ dcorr.dparam <-
 #         )[ 1:n, 1:n, drop = FALSE ]
 #       )
 #       colSums( 
-#         ( aniso$sclmat * drotmat %*% t(x) ) * ( aniso$sclmat * aux ) 
+#         ( aniso[["sclmat"]] * drotmat %*% t(x) ) * ( aniso[["sclmat"]] * aux ) 
 #       )
 #     },
 #     
 #     phi = {
 #       drotmat <- with(
-#         aniso$sincos,
+#         aniso[["sincos"]],
 #         rbind(
 #           c(    -sp*so,    -co*sp,     cp ),
 #           c(  cp*sz*so,  cp*co*sz,  sz*sp ),
@@ -1456,13 +1460,13 @@ dcorr.dparam <-
 #         )[ 1:n, 1:n, drop = FALSE ]
 #       )
 #       colSums( 
-#         ( aniso$sclmat * drotmat %*% t(x) ) * ( aniso$sclmat * aux ) 
+#         ( aniso[["sclmat"]] * drotmat %*% t(x) ) * ( aniso[["sclmat"]] * aux ) 
 #       )
 #     },
 #     
 #     zeta = {
 #       drotmat <- with(
-#         aniso$sincos,
+#         aniso[["sincos"]],
 #         rbind(
 #           c(                0.,               0.,     0. ),
 #           c(  co*sz + cz*sp*so, cz*co*sp - sz*so, -cz*cp ),
@@ -1470,12 +1474,12 @@ dcorr.dparam <-
 #         )[ 1:n, 1:n, drop = FALSE ]
 #       )
 #       colSums( 
-#         ( aniso$sclmat * drotmat %*% t(x) ) * ( aniso$sclmat * aux ) 
+#         ( aniso[["sclmat"]] * drotmat %*% t(x) ) * ( aniso[["sclmat"]] * aux ) 
 #       )
 #     },
     omega = {
       drotmat <- with(
-        aniso$sincos,
+        aniso[["sincos"]],
         rbind(
           c(             sp*co,            -sp*so, 0. ),
           c(  co*sz*cp + cz*so,  cz*co - sz*cp*so, 0. ),
@@ -1483,13 +1487,13 @@ dcorr.dparam <-
         )[ 1:n, 1:n, drop = FALSE ]
       )
       colSums( 
-        ( aniso$sclmat * drotmat %*% t(x) ) * ( aniso$sclmat * aux ) 
+        ( aniso[["sclmat"]] * drotmat %*% t(x) ) * ( aniso[["sclmat"]] * aux ) 
       )
     },
     
     phi = {
       drotmat <- with(
-        aniso$sincos,
+        aniso[["sincos"]],
         rbind(
           c(     cp*so,     cp*co,    -sp ),
           c( -sz*sp*so, -co*sz*sp, -cp*sz ),
@@ -1497,13 +1501,13 @@ dcorr.dparam <-
       )[ 1:n, 1:n, drop = FALSE ]
     )
     colSums( 
-      ( aniso$sclmat * drotmat %*% t(x) ) * ( aniso$sclmat * aux ) 
+      ( aniso[["sclmat"]] * drotmat %*% t(x) ) * ( aniso[["sclmat"]] * aux ) 
     )
   },
   
     zeta = {
       drotmat <- with(
-        aniso$sincos,
+        aniso[["sincos"]],
         rbind(
           c(                0.,               0.,     0. ),
           c(  co*sz + cz*cp*so, cz*co*cp - sz*so, -cz*sp ),
@@ -1511,7 +1515,7 @@ dcorr.dparam <-
         )[ 1:n, 1:n, drop = FALSE ]
       )
       colSums( 
-        ( aniso$sclmat * drotmat %*% t(x) ) * ( aniso$sclmat * aux ) 
+        ( aniso[["sclmat"]] * drotmat %*% t(x) ) * ( aniso[["sclmat"]] * aux ) 
       )
     },
     
@@ -2408,6 +2412,7 @@ compute.estimating.equations <-
   ## 2012-11-27 AP changes in parameter back-transformation
   ## 2013-04-23 AP new names for robustness weights
   ## 2013-05-06 AP changes for solving estimating equations for xi
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
 
   ##  get lik.item
   
@@ -2425,7 +2430,7 @@ compute.estimating.equations <-
   
   ##  check whether generalized covariance matrix is positive definite
   
-  if( lik.item$Valpha$error ) {
+  if( lik.item[["Valpha"]][["error"]] ) {
     if( verbose > 0 ) cat(
       "\n(generalized) correlation matrix Valpha is not positive definite\n"
     )
@@ -2436,7 +2441,7 @@ compute.estimating.equations <-
   
   ##  check whether computation of betahat and bhat failed
   
-  if( lik.item$effects$error ) {
+  if( lik.item[["effects"]][["error"]] ) {
     if( verbose > 0 ) cat(
       "\nan error occurred when estimating the fixed and random effects\n"
     )
@@ -2462,13 +2467,13 @@ compute.estimating.equations <-
     ##  compute Cov[bhat]
     
     r.cov <- compute.covariances(
-      Valpha.objects = lik.item$Valpha,
-      Aalpha = lik.item$effects$Aalpha,
-      Palpha = lik.item$effects$Palpha,
-      rweights = lik.item$effects$rweights,
+      Valpha.objects = lik.item[["Valpha"]],
+      Aalpha = lik.item[["effects"]][["Aalpha"]],
+      Palpha = lik.item[["effects"]][["Palpha"]],
+      rweights = lik.item[["effects"]][["rweights"]],
       XX = XX, TT = TT, names.yy = names( yy ),
-      nugget = lik.item$param["nugget"],
-      eta = lik.item$eta,
+      nugget = lik.item[["param"]]["nugget"],
+      eta = lik.item[["eta"]],
       expectations = expectations,
       cov.bhat = TRUE, full.cov.bhat = TRUE,
       cov.betahat = FALSE,
@@ -2482,7 +2487,7 @@ compute.estimating.equations <-
       verbose = verbose
     )
     
-    if( r.cov$error ) {
+    if( r.cov[["error"]] ) {
       if( verbose > 0 ) cat(
         "\nan error occurred when computing the covariances of fixed and random effects\n"
       )
@@ -2507,13 +2512,13 @@ compute.estimating.equations <-
       
       eeq.exp["nugget"] <- sum( 
         diag( 
-          lik.item$Valpha$Valpha.inverse %*%             
-          ( 1/TtT * lik.item$Valpha$Valpha.inverse ) %*% 
-          r.cov$cov.bhat 
+          lik.item[["Valpha"]][["Valpha.inverse"]] %*%             
+          ( 1/TtT * lik.item[["Valpha"]][["Valpha.inverse"]] ) %*% 
+          r.cov[["cov.bhat"]] 
         ) 
       )
       eeq.emp["nugget"] <- sum( 
-        ( lik.item$effects$z.star )^2 / TtT
+        ( lik.item[["effects"]][["z.star"]] )^2 / TtT
       )
       
     }
@@ -2526,11 +2531,11 @@ compute.estimating.equations <-
       
       eeq.exp["snugget"] <- sum(
         rowSums( 
-          (lik.item$Valpha$Valpha.inverse %*% lik.item$Valpha$Valpha.inverse ) * 
-          r.cov$cov.bhat
+          (lik.item[["Valpha"]][["Valpha.inverse"]] %*% lik.item[["Valpha"]][["Valpha.inverse"]] ) * 
+          r.cov[["cov.bhat"]]
         )
       )
-      eeq.emp["snugget"] <- sum( lik.item$effects$z.star^2 )
+      eeq.emp["snugget"] <- sum( lik.item[["effects"]][["z.star"]]^2 )
       
     }
     
@@ -2542,12 +2547,12 @@ compute.estimating.equations <-
       
       eeq.exp["variance"] <- sum(
         rowSums( 
-          ( lik.item$Valpha$Valpha.inverse %*% lik.item$Valpha$Valpha0 %*% lik.item$Valpha$Valpha.inverse ) * 
-          r.cov$cov.bhat
+          ( lik.item[["Valpha"]][["Valpha.inverse"]] %*% lik.item[["Valpha"]][["Valpha0"]] %*% lik.item[["Valpha"]][["Valpha.inverse"]] ) * 
+          r.cov[["cov.bhat"]]
         )
       )
       eeq.emp["variance"] <- sum( 
-        lik.item$effects$z.star * drop( lik.item$Valpha$Valpha0 %*% lik.item$effects$z.star )
+        lik.item[["effects"]][["z.star"]] * drop( lik.item[["Valpha"]][["Valpha0"]] %*% lik.item[["effects"]][["z.star"]] )
       )
       
     }
@@ -2564,9 +2569,9 @@ compute.estimating.equations <-
       ##  compute trace( Valpha^-1 * dValpha/dalpha * Valpha^-1 * Cov[bhat] )
       
       dValpha <- dcorr.dparam(
-        x = lag.vectors, variogram.model = variogram.model, param = lik.item$param, 
+        x = lag.vectors, variogram.model = variogram.model, param = lik.item[["param"]], 
         d.param = t.i,
-        aniso = lik.item$aniso,
+        aniso = lik.item[["aniso"]],
         verbose = verbose
       )
       ##       if( identical( class( dValpha ), "try-error" ) ){
@@ -2578,12 +2583,12 @@ compute.estimating.equations <-
       
       eeq.exp[t.i] <- sum(
         rowSums( 
-          (lik.item$Valpha$Valpha.inverse %*% dValpha %*% lik.item$Valpha$Valpha.inverse) * 
-          r.cov$cov.bhat
+          (lik.item[["Valpha"]][["Valpha.inverse"]] %*% dValpha %*% lik.item[["Valpha"]][["Valpha.inverse"]]) * 
+          r.cov[["cov.bhat"]]
         )
       )
       eeq.emp[t.i] <- sum( 
-        lik.item$effects$z.star * drop( dValpha %*% lik.item$effects$z.star )
+        lik.item[["effects"]][["z.star"]] * drop( dValpha %*% lik.item[["effects"]][["z.star"]] )
       )
       
     }
@@ -2618,7 +2623,7 @@ compute.estimating.equations <-
     
     ##  store terms in lik.item object
     
-    lik.item$eeq <- list(
+    lik.item[["eeq"]] <- list(
       eeq.emp = eeq.emp,
       eeq.exp = eeq.exp
     )
@@ -2664,6 +2669,7 @@ negative.restr.loglikelihood <-
   ## 2012-11-04 AP unscaled psi-function
   ## 2012-11-27 AP changes in parameter back-transformation
   ## 2013-06-03 AP changes for estimating xihat
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   #     sel <- !c( param.name, aniso.name ) %in% names( fixed.param )
   #     names( adjustable.param ) <- c( param.name, aniso.name )[sel]
@@ -2685,7 +2691,7 @@ negative.restr.loglikelihood <-
   
   ##  check whether generalized covariance matrix is positive definite
   
-  if( lik.item$Valpha$error ) {
+  if( lik.item[["Valpha"]][["error"]] ) {
     if( verbose > 0 ) cat(
       "\n(generalized) correlation matrix Valpha is not positive definite\n"
     )
@@ -2694,7 +2700,7 @@ negative.restr.loglikelihood <-
   
   ##  check whether computation of betahat and bhat failed
   
-  if( lik.item$effects$error ) {
+  if( lik.item[["effects"]][["error"]] ) {
     if( verbose > 0 ) cat(
       "\nan error occurred when estimating the fixed and random effects\n"
     )
@@ -2703,7 +2709,7 @@ negative.restr.loglikelihood <-
   
   ##  check whether Q matrix not positive definite
   
-  if( lik.item$Q$error ) {
+  if( lik.item[["Q"]][["error"]] ) {
     if( verbose > 0 ) cat(
       "\nan error occurred when determinants required for",
       "Gaussian log-likelihood were computed\n"
@@ -2716,12 +2722,12 @@ negative.restr.loglikelihood <-
   t.dim <- dim( XX )
   
   term1 <- -0.5 * (
-    diff( t.dim ) * log( 2 * pi ) + t.dim[1] * log( 1./lik.item$eta ) 
-  ) + t.dim[1] * log( lik.item$param["nugget"] ) +
-  sum( log( diag( lik.item$Valpha$Valpha.ucf ) ) ) 
+    diff( t.dim ) * log( 2 * pi ) + t.dim[1] * log( 1./lik.item[["eta"]] ) 
+  ) + t.dim[1] * log( lik.item[["param"]]["nugget"] ) +
+  sum( log( diag( lik.item[["Valpha"]][["Valpha.ucf"]] ) ) ) 
   
-  Ttpsi <- lik.item$effects$residuals / sqrt( lik.item$param["nugget"] ) *
-    lik.item$effects$rweights
+  Ttpsi <- lik.item[["effects"]][["residuals"]] / sqrt( lik.item[["param"]]["nugget"] ) *
+    lik.item[["effects"]][["rweights"]]
   TtT   <- rep( 1., length( Ttpsi ) )
   if( sum( duplicated( TT ) > 0 ) ){
     Ttpsi <- as.vector( tapply( Ttpsi, factor( TT ), sum ) )
@@ -2729,12 +2735,12 @@ negative.restr.loglikelihood <-
   }
   
   term2 <- 0.5 * ( sum( Ttpsi^2 / TtT ) + sum( 
-      lik.item$effects$z.star * lik.item$effects$bhat 
-    ) / lik.item$param["nugget"] / lik.item$eta
+      lik.item[["effects"]][["z.star"]] * lik.item[["effects"]][["bhat"]] 
+    ) / lik.item[["param"]]["nugget"] / lik.item[["eta"]]
   )
   attributes( term2 ) <- NULL
   
-  term3 <- 0.5 * lik.item$Q$log.det.Q
+  term3 <- 0.5 * lik.item[["Q"]][["log.det.Q"]]
   
   r.neg.restricted.loglik <- term1 + term2 + term3
   
@@ -2779,6 +2785,7 @@ gradient.negative.restricted.loglikelihood <-
   ## 2012-05-04 AP correction of values returned on error
   ## 2012-11-04 AP unscaled psi-function
   ## 2012-11-27 AP changes in parameter back-transformation
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
 
   ##   dtrafo.fct <- list(
   ##     log      = function( x ) 1/x,
@@ -2801,7 +2808,7 @@ gradient.negative.restricted.loglikelihood <-
   
   ##  check whether generalized covariance matrix is positive definite
   
-  if( lik.item$Valpha$error ) {
+  if( lik.item[["Valpha"]][["error"]] ) {
     if( verbose > 0 ) cat(
       "\n(generalized) correlation matrix Valpha is not positive definite\n"
     )
@@ -2810,7 +2817,7 @@ gradient.negative.restricted.loglikelihood <-
   
   ##  check whether computation of betahat and bhat failed
   
-  if( lik.item$effects$error ) {
+  if( lik.item[["effects"]][["error"]] ) {
     if( verbose > 0 ) cat(
       "\nan error occurred when estimating the fixed and random effects\n"
     )
@@ -2819,7 +2826,7 @@ gradient.negative.restricted.loglikelihood <-
   
   ##  check whether Q matrix not positive definite
   
-  if( lik.item$Q$error ) {
+  if( lik.item[["Q"]][["error"]] ) {
     if( verbose > 0 ) cat(
       "\nan error occurred when determinants required for ",
       "Gaussian log-likelihood were computed\n"
@@ -2841,17 +2848,17 @@ gradient.negative.restricted.loglikelihood <-
     
     n <- nrow( XX ); sel.z <- 1:n
     
-    sigma <- sqrt( lik.item$param["nugget"] )
+    sigma <- sqrt( lik.item[["param"]]["nugget"] )
     
-    std.res <- lik.item$effects$residuals / sigma
+    std.res <- lik.item[["effects"]][["residuals"]] / sigma
     
     psi   <-   psi.function( std.res, tuning.psi )
     dpsi  <-  dpsi.function( std.res, tuning.psi )
     d2psi <- d2psi.function( std.res, tuning.psi )
     
-    Qi <- lik.item$Q$Q.inverse
-    Qi.1.Valphai <- Qi[, sel.z] %*% lik.item$Valpha$Valpha.inverse
-    Valphai.Valpha0 <- lik.item$Valpha$Valpha.inverse %*% lik.item$Valpha$Valpha0
+    Qi <- lik.item[["Q"]][["Q.inverse"]]
+    Qi.1.Valphai <- Qi[, sel.z] %*% lik.item[["Valpha"]][["Valpha.inverse"]]
+    Valphai.Valpha0 <- lik.item[["Valpha"]][["Valpha.inverse"]] %*% lik.item[["Valpha"]][["Valpha0"]]
     
     
     ##  initialize gradient
@@ -2867,16 +2874,16 @@ gradient.negative.restricted.loglikelihood <-
       ##  derivative of bhat and betahat
       
       aux <- tapply( 
-        sigma * psi + dpsi * lik.item$effects$residuals,
+        sigma * psi + dpsi * lik.item[["effects"]][["residuals"]],
         factor( TT ),
         sum
       )
       dzbeta <- -0.5 * drop(
         ( Qi[, sel.z] + Qi[, -sel.z] %*% t(XX) ) %*% aux 
-      ) / lik.item$param["nugget"]^2
+      ) / lik.item[["param"]]["nugget"]^2
       
       ##              print( dzbeta[501]/
-      ##                  deriv.fwd.tf[[param.tf["nugget"]]]( lik.item$param["nugget"] ) 
+      ##                  deriv.fwd.tf[[param.tf["nugget"]]]( lik.item[["param"]]["nugget"] ) 
       ##              )
       
       ##  derivative of log( det( Q ) )
@@ -2894,10 +2901,10 @@ gradient.negative.restricted.loglikelihood <-
           cbind( diag( Dmat ),                DX   ),
           cbind(        t(DX), crossprod( XX, DX ) )
         )
-      ) / lik.item$param["nugget"]^2
+      ) / lik.item[["param"]]["nugget"]^2
       
       ##              print( dlogdetQ/
-      ##                  deriv.fwd.tf[[param.tf["nugget"]]]( lik.item$param["nugget"] ) 
+      ##                  deriv.fwd.tf[[param.tf["nugget"]]]( lik.item[["param"]]["nugget"] ) 
       ##              )
       
       ##  derivate of U with respect to nugget
@@ -2906,16 +2913,16 @@ gradient.negative.restricted.loglikelihood <-
       Ttstd.res <- as.vector( tapply( std.res, factor( TT ), sum ) )
       TtT                       <- as.vector( table( TT ) )
       
-      dU <- -0.5 * sum( Ttpsi * Ttstd.res / TtT ) / lik.item$param["nugget"]
+      dU <- -0.5 * sum( Ttpsi * Ttstd.res / TtT ) / lik.item[["param"]]["nugget"]
       
       ##              print( dU/
-      ##                  deriv.fwd.tf[[param.tf["nugget"]]]( lik.item$param["nugget"] ) 
+      ##                  deriv.fwd.tf[[param.tf["nugget"]]]( lik.item[["param"]]["nugget"] ) 
       ##              )
       
       r.gradient["nugget"] <- ( -0.5 * ( 
-          n / lik.item$param["nugget"] + dlogdetQ
+          n / lik.item[["param"]]["nugget"] + dlogdetQ
         ) - dU
-      ) / deriv.fwd.tf[[param.tf["nugget"]]]( lik.item$param["nugget"] )
+      ) / deriv.fwd.tf[[param.tf["nugget"]]]( lik.item[["param"]]["nugget"] )
       
     }
     
@@ -2926,11 +2933,11 @@ gradient.negative.restricted.loglikelihood <-
       
       ##  derivative of bhat and betahat with respect to spatial nugget
       
-      dzbeta <- drop( Qi.1.Valphai %*% lik.item$effects$z.star ) / 
-      sum( lik.item$param["variance"] + lik.item$param["snugget"] )^2
+      dzbeta <- drop( Qi.1.Valphai %*% lik.item[["effects"]][["z.star"]] ) / 
+      sum( lik.item[["param"]]["variance"] + lik.item[["param"]]["snugget"] )^2
       
       ##              print( dzbeta[501]/
-      ##                  deriv.fwd.tf[[param.tf["variance"]]]( lik.item$param["variance"] ) 
+      ##                  deriv.fwd.tf[[param.tf["variance"]]]( lik.item[["param"]]["variance"] ) 
       ##              )
       
       ##  derivative of log( det( Q ) ) with respect to spatial nugget
@@ -2942,7 +2949,7 @@ gradient.negative.restricted.loglikelihood <-
       
       DX <- Dmat * XX
       
-      aux <- lik.item$Valpha$Valpha.inverse %*% lik.item$Valpha$Valpha.inverse / lik.item$eta^2
+      aux <- lik.item[["Valpha"]][["Valpha.inverse"]] %*% lik.item[["Valpha"]][["Valpha.inverse"]] / lik.item[["eta"]]^2
       diag( aux ) <- diag( aux ) + Dmat
       
       dlogdetQ <- -sum( 
@@ -2950,26 +2957,26 @@ gradient.negative.restricted.loglikelihood <-
           cbind(   aux,                DX   ),
           cbind( t(DX), crossprod( XX, DX ) )
         )
-      ) / lik.item$param["nugget"]^2
+      ) / lik.item[["param"]]["nugget"]^2
       
       ##              print( dlogdetQ/
-      ##                  deriv.fwd.tf[[param.tf["variance"]]]( lik.item$param["variance"] ) 
+      ##                  deriv.fwd.tf[[param.tf["variance"]]]( lik.item[["param"]]["variance"] ) 
       ##              )
       
       ##  derivate of U with respect to spatial nugget
       
-      dU <- -0.5 * sum( lik.item$effects$z.star * lik.item$effects$z.star ) /
-      sum( lik.item$param["variance"] + lik.item$param["snugget"] )^2
+      dU <- -0.5 * sum( lik.item[["effects"]][["z.star"]] * lik.item[["effects"]][["z.star"]] ) /
+      sum( lik.item[["param"]]["variance"] + lik.item[["param"]]["snugget"] )^2
       
       ##              print( dU /
-      ##                  deriv.fwd.tf[[param.tf["variance"]]]( lik.item$param["variance"] ) 
+      ##                  deriv.fwd.tf[[param.tf["variance"]]]( lik.item[["param"]]["variance"] ) 
       ##              )
       
       r.gradient["snugget"] <- ( -0.5 * ( 
-          sum( diag( lik.item$Valpha$Valpha.inverse ) ) / 
-          sum( lik.item$param["variance"] + lik.item$param["snugget"] ) + dlogdetQ
+          sum( diag( lik.item[["Valpha"]][["Valpha.inverse"]] ) ) / 
+          sum( lik.item[["param"]]["variance"] + lik.item[["param"]]["snugget"] ) + dlogdetQ
         ) - dU
-      ) / deriv.fwd.tf[[param.tf["snugget"]]]( lik.item$param["snugget"] )
+      ) / deriv.fwd.tf[[param.tf["snugget"]]]( lik.item[["param"]]["snugget"] )
       
     }
     
@@ -2980,11 +2987,11 @@ gradient.negative.restricted.loglikelihood <-
       
       ##  derivative of bhat and betahat with respect to variance
       
-      dzbeta <- drop( Qi.1.Valphai %*% lik.item$Valpha$Valpha0 %*% lik.item$effects$z.star ) / 
-      sum( lik.item$param["variance"] + lik.item$param["snugget"] )^2
+      dzbeta <- drop( Qi.1.Valphai %*% lik.item[["Valpha"]][["Valpha0"]] %*% lik.item[["effects"]][["z.star"]] ) / 
+      sum( lik.item[["param"]]["variance"] + lik.item[["param"]]["snugget"] )^2
       
       ##              print( dzbeta[501]/
-      ##                  deriv.fwd.tf[[param.tf["variance"]]]( lik.item$param["variance"] ) 
+      ##                  deriv.fwd.tf[[param.tf["variance"]]]( lik.item[["param"]]["variance"] ) 
       ##              )
       
       ##  derivative of log( det( Q ) ) with respect to variance
@@ -2996,7 +3003,7 @@ gradient.negative.restricted.loglikelihood <-
       
       DX <- Dmat * XX
       
-      aux <- Valphai.Valpha0 %*% lik.item$Valpha$Valpha.inverse / lik.item$eta^2
+      aux <- Valphai.Valpha0 %*% lik.item[["Valpha"]][["Valpha.inverse"]] / lik.item[["eta"]]^2
       diag( aux ) <- diag( aux ) + Dmat
       
       dlogdetQ <- -sum( 
@@ -3004,27 +3011,27 @@ gradient.negative.restricted.loglikelihood <-
           cbind(   aux,                DX   ),
           cbind( t(DX), crossprod( XX, DX ) )
         )
-      ) / lik.item$param["nugget"]^2
+      ) / lik.item[["param"]]["nugget"]^2
       
       ##              print( dlogdetQ/
-      ##                  deriv.fwd.tf[[param.tf["variance"]]]( lik.item$param["variance"] ) 
+      ##                  deriv.fwd.tf[[param.tf["variance"]]]( lik.item[["param"]]["variance"] ) 
       ##              )
       
       ##  derivate of U with respect to variance
       
       dU <- -0.5 * sum( 
-        lik.item$effects$z.star * drop( lik.item$Valpha$Valpha0 %*% lik.item$effects$z.star ) 
-      ) / sum( lik.item$param["variance"] + lik.item$param["snugget"] )^2
+        lik.item[["effects"]][["z.star"]] * drop( lik.item[["Valpha"]][["Valpha0"]] %*% lik.item[["effects"]][["z.star"]] ) 
+      ) / sum( lik.item[["param"]]["variance"] + lik.item[["param"]]["snugget"] )^2
       
       ##              print( dU /
-      ##                  deriv.fwd.tf[[param.tf["variance"]]]( lik.item$param["variance"] ) 
+      ##                  deriv.fwd.tf[[param.tf["variance"]]]( lik.item[["param"]]["variance"] ) 
       ##              )
       
       r.gradient["variance"] <- ( -0.5 * ( 
           sum( diag( Valphai.Valpha0 ) ) / 
-          sum( lik.item$param["variance"] + lik.item$param["snugget"] ) + dlogdetQ
+          sum( lik.item[["param"]]["variance"] + lik.item[["param"]]["snugget"] ) + dlogdetQ
         ) - dU
-      ) / deriv.fwd.tf[[param.tf["variance"]]]( lik.item$param["variance"] )
+      ) / deriv.fwd.tf[[param.tf["variance"]]]( lik.item[["param"]]["variance"] )
       
     }
     
@@ -3044,8 +3051,8 @@ gradient.negative.restricted.loglikelihood <-
       for( t.i in t.extra.par ){
         
         dValpha <- dcorr.dparam(
-          x = lag.vectors, variogram.model = variogram.model, param = lik.item$param, d.param = t.i,
-          aniso = lik.item$aniso,
+          x = lag.vectors, variogram.model = variogram.model, param = lik.item[["param"]], d.param = t.i,
+          aniso = lik.item[["aniso"]],
           verbose = verbose
         )
         ##         if( identical( class( dValpha ), "try-error" ) ){
@@ -3055,16 +3062,16 @@ gradient.negative.restricted.loglikelihood <-
         ##           return( t.result )
         ##         }
         
-        dValpha.Valphai <- dValpha %*% lik.item$Valpha$Valpha.inverse
+        dValpha.Valphai <- dValpha %*% lik.item[["Valpha"]][["Valpha.inverse"]]
         
         ##  derivative of bhat and betahat
         
         dzbeta <- drop( 
-          Qi.1.Valphai %*% dValpha.Valphai %*% lik.item$effects$bhat 
-        ) * lik.item$param["variance"] / sum( lik.item$param["variance"] + lik.item$param["snugget"] )^2
+          Qi.1.Valphai %*% dValpha.Valphai %*% lik.item[["effects"]][["bhat"]] 
+        ) * lik.item[["param"]]["variance"] / sum( lik.item[["param"]]["variance"] + lik.item[["param"]]["snugget"] )^2
         
         ##              print( dzbeta[501]/
-        ##                  deriv.fwd.tf[[param.tf[t.i]]]( lik.item$param[t.i] ) 
+        ##                  deriv.fwd.tf[[param.tf[t.i]]]( lik.item[["param"]][t.i] ) 
         ##              )
         
         ##  derivative of log( det( Q ) )
@@ -3076,7 +3083,7 @@ gradient.negative.restricted.loglikelihood <-
         
         DX <- Dmat * XX
         
-        aux <- lik.item$param["variance"] * lik.item$Valpha$Valpha.inverse %*% dValpha.Valphai / lik.item$eta^2
+        aux <- lik.item[["param"]]["variance"] * lik.item[["Valpha"]][["Valpha.inverse"]] %*% dValpha.Valphai / lik.item[["eta"]]^2
         diag( aux ) <- diag( aux ) + Dmat
         
         dlogdetQ <- -sum( 
@@ -3084,29 +3091,29 @@ gradient.negative.restricted.loglikelihood <-
             cbind(   aux,                DX   ),
             cbind( t(DX), crossprod( XX, DX ) )
           )
-        ) / lik.item$param["nugget"]^2
+        ) / lik.item[["param"]]["nugget"]^2
         
         ##              print( dlogdetQ/
-        ##                  deriv.fwd.tf[[param.tf[t.i]]]( lik.item$param[t.i] ) 
+        ##                  deriv.fwd.tf[[param.tf[t.i]]]( lik.item[["param"]][t.i] ) 
         ##              )
         ##              
         ##  derivate of U with respect to variance
         
         dU <- -0.5 * sum( 
-          lik.item$effects$z.star * drop( dValpha.Valphai %*% lik.item$effects$bhat )
-        ) * lik.item$param["variance"] / sum( lik.item$param["variance"] + lik.item$param["snugget"] )^2
+          lik.item[["effects"]][["z.star"]] * drop( dValpha.Valphai %*% lik.item[["effects"]][["bhat"]] )
+        ) * lik.item[["param"]]["variance"] / sum( lik.item[["param"]]["variance"] + lik.item[["param"]]["snugget"] )^2
         
         ##              print( dU /
-        ##                  deriv.fwd.tf[[param.tf[t.i]]]( lik.item$param[t.i] ) 
+        ##                  deriv.fwd.tf[[param.tf[t.i]]]( lik.item[["param"]][t.i] ) 
         ##              )
         
         r.gradient[t.i] <- ( -0.5 * ( 
-            lik.item$param["variance"] / 
-            sum( lik.item$param["variance"] + lik.item$param["snugget"] ) *
+            lik.item[["param"]]["variance"] / 
+            sum( lik.item[["param"]]["variance"] + lik.item[["param"]]["snugget"] ) *
             sum( diag( dValpha.Valphai ) ) + dlogdetQ
           ) - dU
         ) / deriv.fwd.tf[[param.tf[t.i]]]( 
-          c( lik.item$param, lik.item$aniso$aniso )[t.i] 
+          c( lik.item[["param"]], lik.item[["aniso"]][["aniso"]] )[t.i] 
         )
       }
     }
@@ -3251,127 +3258,13 @@ georob.fit <-
   ## 2013-04-23 AP new names for robustness weights
   ## 2013-06-03 AP handling design matrices with rank < ncol(x)
   ## 2013-05-06 AP changes for solving estimating equations for xi
+  ## 2013-06-12 AP changes in stored items of Valpha object
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   ##  ToDos:
   
-  ##  - ...$xy durch ...[["xy"]] ersetzen
-  ##  - QR Zerlegung verwenden (Inversion Matrix M)
-  
-  ##  History:
-  
-  ##  glsrob.fit
-  
-  ##  - Implementierung der Schaetzung geometrisch anisotroper Variogramme
-  ##  - Implementierung der Schaetzungen fuer replizierte Messungen an gleicher Messtelle  
-  ##  - Modifikation fuer Fall, dass alle Variogrammparameter fixiert sind
-  ##  - neue Version der Transformation der Variogrammparameter
-  ##  - IRWLS Berechung von betahat und bhat entweder von Werten im initial.object 
-  ##    oder von Schaetzwerten aus vorangehender Iteration
-  ##  - Berechung der Kovarianzen zwischen betahat und (z - bhat)
-  ##  - Anpassung fuer neue Struktur von initial.objects
-  
-  ##  f.glsrob803.fit
-  
-  ##  - Transformation der Variogrammparameter einzeln definierbar
-  ##  - Implementierung der Schaetzung fuer intrinsische Prozesse nullter Ordnung 
-  ##    d.h. mit Variogramm bzw. generalisierter statt stationarer Kovarianzfunktion
-  ##  - f.check.cov.par.inp entfernt
-  ##  - Ergaenzung und Korrektur der Berechnung der partiellen Ableitung der 
-  ##    generalisierten Kovarianzfunktion nach scale und Extraparametern
-  ##  - Funktion gcr.grad zur numerischen Berechnung der partiellen Ableitungen der 
-  ##    generalisierten Kovarianzfunktion fuer den Fall, dass keine Ausdruck 
-  ##    in geschlossener Form fuer gewuenschte Ableitung existiert
-  
-  ##  f.glsrob802.fit:
-  
-  ##  - dcorr.dparam.R und f.check.cov.par.inp eingefuegt
-  ##      und Aufruf in compute.estimating.equations und
-  ##      gradient.negative.restricted.loglikelihood angepasst
-  ##  NOTE: cov.pars need to be named "variance, nugget, scale, a, b, c, ..."
-  ##  - trafo.fcts ergaenzt mit a, b, c
-  
-  ##  f.glsrob801.fit:
-  
-  ##  - Berechnung der Freiheitsgrade des Modells
-  ##  - reduzierter Output fuer Simulationen
-  ##  - nur ausgewaehlte Teile von initial.objects und von Valpha.objects speichern
-  ##  - fuer Vorhersage benoetigte Objekte speichern
-  ##  - Umbenennung der Funktion
-  ##  - Berechnung von betahat und bhat im robusten Fall, wenn alle
-  ##    Kovarianzparameter fixiert sind
-  
-  ##  f.glsrob800:
-  ##  - z.T. neue Namen fuer Argumente
-  ##  - Entruempeln der Berechnung der div. Kovarianzen
-  ##  - nicht robuste Schaetzungen durch Maximierung der Gauss'schen
-  ##    Restricted Log-likelihood (Code von f.glsrob30) statt durch Loesen 
-  ##    der Schaetzgleichungen
-  
-  ##  f.glsrob701: 
-  ##  - Huber Funktionen eingebaut
-  ##  - reparametrisierte Schaetzgleichungen
-  ##  - neue Version von compute.covariances mit Auswahl von Moeglichkeiten 
-  ##    Var[psi] zu berechnen 
-  ##  - svd zur Matrixinversion brauchen, falls multicore package geladen 
-  ##    (try funktioniert dann nicht)
-  
-  ##  f.glsrob70: 
-  ##  - kleine Aenderungen logistische Funktionen
-  ##  - verschiedene Varianten der Biaskorrektur der Schaetzgleichungen 
-  ##    u.a. gemaess Vorschlag von Hansruedi Kuensch vom 26. Jan. 2011
-  ##  - Schaetzgleichungen aus Abschnitt 3.9, Vorschlag von 
-  ##    Hansruedi Kuensch vom 18. Jan. 2011, fuer Proposal 2 Vorschlag 
-  ##    von Werner Stahel loesen
-  ##  - Parametrisierung Rho- und assozierte Funktionen fuer t-Verteilung 
-  ##    so dass Psi(0) = 1
-  ##  - kleine Aenderungen in f.update.beta.z und prepare.likelihood.calculations
-  
-  ##  f.glrob52: 
-  ##  - Biaskorrektur fuer Nugget durch Modifizierung der Schaetzgleichungen 
-  ##    fuer Laplace Approximiation der restricted Loglikelihoodfunktion
-  ##  - Parametrisierung Rho- und assozierte Funktionen fuer t-Verteilung 
-  ##    so dass Psi(0) = 1
-  ##  - kleine Aenderungen in f.update.beta.z und prepare.likelihood.calculations
-  
-  ##  f.glsrob501: 
-  ##  - Vereinfachung der Berechung des analytischen Gradienten 
-  ##    gemaess Notizen von HRK vom 10. 1. 2011
-  
-  ##  f.glsrob50:
-  ##  - Loesen der Schaetzgleichungen mit nleqslv statt Maximierung der Laplace 
-  ##    Approximation der restricted Likelihood Funktion mit optim (analog zu 
-  ##    f.glsrobRW)
-  ##  - proposal = c("REML1", "REML2") analog zu Richardson & Welsh, 1995
-  
-  ##  f.glsrob3: 
-  ##  - Gradient fuer sphaerische und zirkulaere Kovarianzfunktion
-  ##  - reparametrisierte Rho- und assozierte Funktionen fuer t-Verteilung
-  ##  - Abfangen von Fehlern bei Berechnung der Korrelationsmatrix
-  ##  - Berechnung der Determinante und der Inversen von Q in 
-  ##    prepare.likelihood.calculations
-  
-  
-  ##  f.glsrob2: 
-  ##  neue Basisversion mit 
-  ##  - eingebauter Fisher-Konsistenzkorrektur fuer Nugget
-  ##  - Funktion fuer Berechung des analytischem Gradienten
-  ##  - Funktion fuer Berechung der Kovarianzmatrizen von bhat, z-bhat
-  ##    betahat 
-  
-  ##  Arguments:
-  
-  ##  initial.objects   a list with the fixed effects model matrix, the response 
-  ##                    vector, the initial values for the regression coefficient beta
-  ##                    and the stochastic component z, a list with output of the initial 
-  ##                    call of lmrob, and a list with the locations formula, 
-  ##                    the coordiantes of the sampling locations and their dist matrix
-  
-  
-  
-  
-  
+   
   ##  main body of georob.fit
-  
   
   ##  define rho-function and derivatives
   
@@ -3448,11 +3341,11 @@ georob.fit <-
   
   ##  copy items of initial.objects to local environment
   
-  XX          <- initial.objects$x
-  yy          <- initial.objects$y
-  betahat   <- coefficients( initial.objects$initial.fit )
-  bhat      <- initial.objects$bhat
-  coordinates <- initial.objects$locations.objects$coordinates
+  XX          <- initial.objects[["x"]]
+  yy          <- initial.objects[["y"]]
+  betahat   <- coefficients( initial.objects[["initial.fit"]] )
+  bhat      <- initial.objects[["bhat"]]
+  coordinates <- initial.objects[["locations.objects"]][["coordinates"]]
   
   ##  check for multiple observations for same location and generate
   ##  designmatrix of replicated observations
@@ -3715,17 +3608,17 @@ georob.fit <-
   
   lik.item <- get( "lik.item", pos = as.environment( envir ) )
 
-  lik.item$param   <-  rep( -1., length( param.name ) )
-  lik.item$eta     <- NA
-  lik.item$aniso   <- list( 
-    isotropic = initial.objects$isotropic, 
+  lik.item[["param"]]   <-  rep( -1., length( param.name ) )
+  lik.item[["eta"]]     <- NA
+  lik.item[["aniso"]]   <- list( 
+    isotropic = initial.objects[["isotropic"]], 
     aniso = rep( -1., length( aniso.name ) )
   )
-  lik.item$Valpha  <- list()
-  lik.item$effects <- list()
-  lik.item$eeq     <- list()
-  names( lik.item$param ) <- param.name
-  names( lik.item$aniso$aniso ) <- aniso.name
+  lik.item[["Valpha"]]  <- list()
+  lik.item[["effects"]] <- list()
+  lik.item[["eeq"]]     <- list()
+  names( lik.item[["param"]] ) <- param.name
+  names( lik.item[["aniso"]][["aniso"]] ) <- aniso.name
   
   assign( "lik.item", lik.item, pos = as.environment( envir ) )
   
@@ -3740,11 +3633,11 @@ georob.fit <-
       dnorm( x ) * dpsi.function( x, tuning.psi = tuning.psi )
     }, 
     lower = -Inf, upper = Inf, 
-    dpsi.function = rho.psi.etc$dpsi.function, 
+    dpsi.function = rho.psi.etc[["dpsi.function"]], 
     tuning.psi = tuning.psi
   )
-  if( !identical( t.exp$message, "OK" ) ) stop( t.exp$message )
-  expectations["dpsi"] <- t.exp$value
+  if( !identical( t.exp[["message"]], "OK" ) ) stop( t.exp[["message"]] )
+  expectations["dpsi"] <- t.exp[["value"]]
   if( verbose > 1 ) cat( 
     "\nexpectation of psi'(epsilon/sigma)                             :", 
     signif( expectations["dpsi"] ), "\n" 
@@ -3757,14 +3650,14 @@ georob.fit <-
       dnorm( x ) * ( psi.function( x, tuning.psi = tuning.psi ) )^2
     }, 
     lower = -Inf, upper = Inf, 
-    psi.function = rho.psi.etc$psi.function,
+    psi.function = rho.psi.etc[["psi.function"]],
     tuning.psi = tuning.psi
   )
-  if( !identical( t.exp$message, "OK" ) ) stop( t.exp$message )
-  expectations["psi2"] <- t.exp$value
+  if( !identical( t.exp[["message"]], "OK" ) ) stop( t.exp[["message"]] )
+  expectations["psi2"] <- t.exp[["value"]]
   if( verbose > 1 ) cat( 
     "expectation of (psi(epsilon/sigma))^2                          :", 
-    signif( t.exp$value ), "\n" 
+    signif( t.exp[["value"]] ), "\n" 
   )
   
   
@@ -3801,8 +3694,8 @@ georob.fit <-
         lag.vectors = lag.vectors,
         XX = XX, min.condnum = min.condnum, rankdef.x = rankdef.x,
         yy = yy, betahat = betahat, TT = TT, bhat = bhat, 
-        psi.function = rho.psi.etc$psi.function, 
-        dpsi.function = rho.psi.etc$dpsi.function, 
+        psi.function = rho.psi.etc[["psi.function"]], 
+        dpsi.function = rho.psi.etc[["dpsi.function"]], 
         tuning.psi = tuning.psi,
         tuning.psi.nr = tuning.psi.nr,
         irwls.initial = irwls.initial,
@@ -3813,19 +3706,19 @@ georob.fit <-
         verbose = verbose
       ) 
       
-      #       r.param <- r.root$x
+      #       r.param <- r.root[["x"]]
       #       names( r.param ) <- names( transformed.param[ fit.param ] )
       
-      r.gradient <- r.root$fvec
+      r.gradient <- r.root[["fvec"]]
       names( r.gradient ) <- c(
         names( transformed.param[ fit.param ] ),
         names( transformed.aniso[ fit.aniso ] )
       )
       
-      r.converged <- r.root$termcd == 1
-      r.convergence.code <- r.root$termcd 
+      r.converged <- r.root[["termcd"]] == 1
+      r.convergence.code <- r.root[["termcd"]] 
       
-      r.counts <- c( nfcnt = r.root$nfcnt, njcnt = r.root$njcnt )
+      r.counts <- c( nfcnt = r.root[["nfcnt"]], njcnt = r.root[["njcnt"]] )
       
     } else {
       
@@ -3852,8 +3745,8 @@ georob.fit <-
         lag.vectors = lag.vectors,
         XX = XX, min.condnum = min.condnum, rankdef.x = rankdef.x,
         yy = yy, betahat = betahat, TT = TT, bhat = bhat, 
-        psi.function = rho.psi.etc$psi.function, 
-        dpsi.function = rho.psi.etc$dpsi.function, 
+        psi.function = rho.psi.etc[["psi.function"]], 
+        dpsi.function = rho.psi.etc[["dpsi.function"]], 
         tuning.psi = tuning.psi,
         tuning.psi.nr = tuning.psi.nr,
         irwls.initial = irwls.initial,
@@ -3906,9 +3799,9 @@ georob.fit <-
         lag.vectors = lag.vectors,
         XX = XX, min.condnum = min.condnum, rankdef.x = rankdef.x,
         yy = yy, betahat = betahat, TT = TT, bhat = bhat, 
-        psi.function = rho.psi.etc$psi.function, 
-        dpsi.function = rho.psi.etc$dpsi.function, 
-        d2psi.function = rho.psi.etc$d2psi.function, 
+        psi.function = rho.psi.etc[["psi.function"]], 
+        dpsi.function = rho.psi.etc[["dpsi.function"]], 
+        d2psi.function = rho.psi.etc[["d2psi.function"]], 
         tuning.psi = tuning.psi,
         tuning.psi.nr = tuning.psi.nr,
         irwls.initial = irwls.initial,
@@ -3918,16 +3811,16 @@ georob.fit <-
         verbose = verbose
       )    
       
-      r.opt.neg.loglik <- r.opt.neg.restricted.loglik$value     
-      r.converged <- r.opt.neg.restricted.loglik$convergence == 0
-      r.convergence.code <- r.opt.neg.restricted.loglik$convergence      
-      r.counts <- r.opt.neg.restricted.loglik$counts
+      r.opt.neg.loglik <- r.opt.neg.restricted.loglik[["value"]]     
+      r.converged <- r.opt.neg.restricted.loglik[["convergence"]] == 0
+      r.convergence.code <- r.opt.neg.restricted.loglik[["convergence"]]      
+      r.counts <- r.opt.neg.restricted.loglik[["counts"]]
       
-      if( hessian ) r.hessian <- r.opt.neg.restricted.loglik$hessian
+      if( hessian ) r.hessian <- r.opt.neg.restricted.loglik[["hessian"]]
       
       
       r.gradient <- gradient.negative.restricted.loglikelihood(
-        adjustable.param = r.opt.neg.restricted.loglik$par,
+        adjustable.param = r.opt.neg.restricted.loglik[["par"]],
         envir = envir,
         variogram.model = variogram.model, 
         fixed.param = c( 
@@ -3943,9 +3836,9 @@ georob.fit <-
         lag.vectors = lag.vectors,
         XX = XX, min.condnum = min.condnum, rankdef.x = rankdef.x,
         yy = yy, betahat = betahat, TT = TT, bhat = bhat, 
-        psi.function = rho.psi.etc$psi.function, 
-        dpsi.function = rho.psi.etc$dpsi.function, 
-        d2psi.function = rho.psi.etc$d2psi.function, 
+        psi.function = rho.psi.etc[["psi.function"]], 
+        dpsi.function = rho.psi.etc[["dpsi.function"]], 
+        d2psi.function = rho.psi.etc[["d2psi.function"]], 
         tuning.psi = tuning.psi,
         tuning.psi.nr = tuning.psi.nr,
         irwls.initial = irwls.initial,
@@ -3981,8 +3874,8 @@ georob.fit <-
         lag.vectors = lag.vectors,
         XX = XX, min.condnum = min.condnum, rankdef.x = rankdef.x,
         yy = yy, betahat = betahat, TT = TT, bhat = bhat, 
-        psi.function = rho.psi.etc$psi.function, 
-        dpsi.function = rho.psi.etc$dpsi.function, 
+        psi.function = rho.psi.etc[["psi.function"]], 
+        dpsi.function = rho.psi.etc[["dpsi.function"]], 
         tuning.psi = tuning.psi,
         tuning.psi.nr = tuning.psi.nr,
         irwls.initial = irwls.initial,
@@ -4011,9 +3904,9 @@ georob.fit <-
         lag.vectors = lag.vectors,
         XX = XX, min.condnum = min.condnum, rankdef.x = rankdef.x,
         yy = yy, betahat = betahat, TT = TT, bhat = bhat, 
-        psi.function = rho.psi.etc$psi.function, 
-        dpsi.function = rho.psi.etc$dpsi.function, 
-        d2psi.function = rho.psi.etc$d2psi.function, 
+        psi.function = rho.psi.etc[["psi.function"]], 
+        dpsi.function = rho.psi.etc[["dpsi.function"]], 
+        d2psi.function = rho.psi.etc[["d2psi.function"]], 
         tuning.psi = tuning.psi,
         tuning.psi.nr = tuning.psi.nr,
         irwls.initial = irwls.initial,
@@ -4049,13 +3942,13 @@ georob.fit <-
     ##  compute the covariances
     
     r.cov <- compute.covariances(
-      Valpha.objects = lik.item$Valpha,
-      Aalpha = lik.item$effects$Aalpha,
-      Palpha = lik.item$effects$Palpha,
-      rweights = lik.item$effects$rweights,
+      Valpha.objects = lik.item[["Valpha"]],
+      Aalpha = lik.item[["effects"]][["Aalpha"]],
+      Palpha = lik.item[["effects"]][["Palpha"]],
+      rweights = lik.item[["effects"]][["rweights"]],
       XX = XX, TT = TT, names.yy = names( yy ),
-      nugget = lik.item$param["nugget"],
-      eta = lik.item$eta,
+      nugget = lik.item[["param"]]["nugget"],
+      eta = lik.item[["eta"]],
       expectations = expectations,
       cov.bhat = cov.bhat, full.cov.bhat = full.cov.bhat,
       cov.betahat = cov.betahat, 
@@ -4071,15 +3964,15 @@ georob.fit <-
     
   }
   
-  attr( r.gradient, "eeq.emp" )    <- lik.item$eeq$eeq.emp
-  attr( r.gradient, "eeq.exp" )    <- lik.item$eeq$eeq.exp
+  attr( r.gradient, "eeq.emp" )    <- lik.item[["eeq"]][["eeq.emp"]]
+  attr( r.gradient, "eeq.exp" )    <- lik.item[["eeq"]][["eeq.exp"]]
   
   ##      ##  compute residual degrees of freedom 
   ##      
   ##      r.df <- f.compute.df( 
-  ##          Valpha = lik.item$Valpha$Valpha,
+  ##          Valpha = lik.item[["Valpha"]][["Valpha"]],
   ##          XX = XX, 
-  ##          param = lik.item$param
+  ##          param = lik.item[["param"]]
   ##      )
   
   ##  collect output
@@ -4087,22 +3980,22 @@ georob.fit <-
   result.list <- list(
     loglik = -r.opt.neg.loglik,
     variogram.model = variogram.model,
-    param = lik.item$param,
-    aniso = lik.item$aniso,
+    param = lik.item[["param"]],
+    aniso = lik.item[["aniso"]],
     gradient = r.gradient,
     psi.func = psi.func,
     tuning.psi = tuning.psi,
-    coefficients = lik.item$effects$betahat,
-    fitted.values = drop( XX %*% lik.item$effects$betahat )[TT],
-    bhat = lik.item$effects$bhat,
-    residuals = lik.item$effects$residuals,
-    rweights = lik.item$effects$rweights,
+    coefficients = lik.item[["effects"]][["betahat"]],
+    fitted.values = drop( XX %*% lik.item[["effects"]][["betahat"]] )[TT],
+    bhat = lik.item[["effects"]][["bhat"]],
+    residuals = lik.item[["effects"]][["residuals"]],
+    rweights = lik.item[["effects"]][["rweights"]],
     converged = r.converged,
     convergence.code = r.convergence.code,
     iter = r.counts,
     Tmat = TT
   )
-  names( result.list$fitted.values ) <- names( result.list$residuals )
+  names( result.list[["fitted.values"]] ) <- names( result.list[["residuals"]] )
   
   if( any( c( 
         cov.bhat, cov.betahat, cov.bhat.betahat, 
@@ -4112,32 +4005,32 @@ georob.fit <-
     ) 
   ){
     
-    result.list$cov <- compress( r.cov )
+    result.list[["cov"]] <- compress( r.cov )
     
   }
   
-  ##      result.list$df.model <- r.df
+  ##      result.list[["df.model"]] <- r.df
   
   if( full.output ){
     
-    result.list$param.tf <- param.tf
-    result.list$fwd.tf <- fwd.tf
-    result.list$bwd.tf <- bwd.tf
+    result.list[["param.tf"]] <- param.tf
+    result.list[["fwd.tf"]] <- fwd.tf
+    result.list[["bwd.tf"]] <- bwd.tf
     if( !is.null( r.hessian ) ){
-      result.list$hessian <- r.hessian
+      result.list[["hessian"]] <- r.hessian
     }
-    result.list$expectations     <- expectations
-    result.list$Valpha.objects    <- compress( 
-      lik.item$Valpha[georob.control()$stored.items$Valpha.objects]
+    result.list[["expectations"]]     <- expectations
+    result.list[["Valpha.objects"]]    <- compress( 
+      lik.item[["Valpha"]][c( "Valpha.inverse", "Valpha", "Valpha.ucf", "Valpha.ilcf", "gcr.constant" )]
     )
-    result.list$Aalpha <- lik.item$effects$Aalpha
-    result.list$Palpha <- compress( lik.item$effects$Palpha )
+    result.list[["Aalpha"]] <- lik.item[["effects"]][["Aalpha"]]
+    result.list[["Palpha"]] <- lik.item[["effects"]][["Palpha"]]
 
-    result.list$locations.objects <- initial.objects$locations.objects
+    result.list[["locations.objects"]] <- initial.objects[["locations.objects"]]
     
-    result.list$initial.objects <- list(
-      coefficients = initial.objects$betahat,
-      bhat = initial.objects$bhat,
+    result.list[["initial.objects"]] <- list(
+      coefficients = initial.objects[["betahat"]],
+      bhat = initial.objects[["bhat"]],
       param = param,
       fit.param = fit.param,
       aniso = aniso,
@@ -4161,11 +4054,13 @@ getCall.georob <-
   ## Function replaces the name of a formula object in the call component
   ## of a georob object by the formula itself (needed for update.default to
   ## work correctly)
-  
+
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
+
   if( is.null( call <- getElement( object, "call" ) ) )  stop(
     "need an object with call component"
   )
-  call$formula <- update.formula( formula(object), formula( object ) )
+  call[["formula"]] <- update.formula( formula(object), formula( object ) )
   
   return( call )
   
@@ -4191,6 +4086,7 @@ compute.semivariance <-
   
   ## 2012-04-13 A. Papritz
   ## 2012-05-23 ap correction in model.list for models with more than 4 parameters
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   ## matrix for coordinate transformation
   

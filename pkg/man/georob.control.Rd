@@ -1,4 +1,4 @@
-% 2013-06-06 A. Papritz
+% 2013-06-12 A. Papritz
 % R CMD Rdconv -t html -o bla.html georob.control.Rd ; open bla.html; R CMD Rd2pdf --force georob.control.Rd; 
 \encoding{macintosh}
 \name{georob.control}
@@ -28,8 +28,8 @@ georob.control(initial.method = c("lmrob", "rq", "lm"), bhat = NULL,
     safe.param = 1.e12, psi.func = c("logistic", "t.dist", "huber"),
     tuning.psi.nr = 1000, min.rweight = 0.25,
     irwls.initial = TRUE, irwls.maxiter = 50, 
-    irwls.reltol = sqrt(.Machine$double.eps),
-    force.gradient = FALSE, zero.dist = sqrt(.Machine$double.eps),
+    irwls.reltol = sqrt(.Machine[["double.eps"]]),
+    force.gradient = FALSE, zero.dist = sqrt(.Machine[["double.eps"]]),
     cov.bhat = FALSE, full.cov.bhat = FALSE, cov.betahat = TRUE, 
     cov.bhat.betahat = FALSE, 
     cov.delta.bhat = TRUE, full.cov.delta.bhat = TRUE,

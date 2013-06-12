@@ -10,8 +10,8 @@ cv.georob <-
     formula = NULL, subset = NULL,
     nset = 10, seed = NULL, sets = NULL,
     duplicates.in.same.set = TRUE,
-    re.estimate = TRUE, param = object$param, 
-    fit.param = object$initial.objects$fit.param,
+    re.estimate = TRUE, param = object[["param"]], 
+    fit.param = object[["initial.objects"]][["fit.param"]],
     return.fit = FALSE, reduced.output = TRUE,
     lgn = FALSE,
     ncores = min( nset, detectCores() ),
@@ -20,6 +20,7 @@ cv.georob <-
   )
 {
   
+#  \$([[:alnum:]\.]+)([\^\r,$\[\] \(\)])          [["\1"]]\2
   ## Function computes nset-fold cross-validation predictions from a
   ## fitted georob object
   
@@ -72,6 +73,7 @@ cv.georob <-
   ## 2013-04-24 AP changes for parallelization on windows os
   ## 2013-05-23 AP correct handling of missing observations
   ## 2013-05-24 AP separate initial variogram parameters for each cross-validation set
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
     
   ## auxiliary function that fits the model and computes the predictions of
   ## a cross-validation set
@@ -96,7 +98,7 @@ cv.georob <-
     ## change environment of terms and formula so that subset selection works for update            
     
     environment( formula ) <- environment()
-    environment( object$terms ) <- environment()
+    environment( object[["terms"]] ) <- environment()
     
     ## read-off initial values of variogram parameters
     
@@ -148,8 +150,8 @@ cv.georob <-
     
     if( reduced.output ){
       
-      if( !is.null( t.georob$cov$cov.betahat ) ){
-        t.se.coef <- sqrt( diag( expand( t.georob$cov$cov.betahat ) ) )
+      if( !is.null( t.georob[["cov"]][["cov.betahat"]] ) ){
+        t.se.coef <- sqrt( diag( expand( t.georob[["cov"]][["cov.betahat"]] ) ) )
       } else {
         t.se.coef <- NULL
       }
@@ -160,9 +162,9 @@ cv.georob <-
         "coefficients"
       )]
       
-      t.georob$aniso <- t.georob$aniso$aniso
+      t.georob[["aniso"]] <- t.georob[["aniso"]][["aniso"]]
       
-      if( !is.null( t.se.coef ) ) t.georob$se.coefficients <- t.se.coef
+      if( !is.null( t.se.coef ) ) t.georob[["se.coefficients"]] <- t.se.coef
       
     }
     
@@ -172,15 +174,15 @@ cv.georob <-
   
   ## redefine na.action component of object
   
-  if( identical( class( object$na.action ), "exclude" ) ){
-    class( object$na.action ) <- "omit"
+  if( identical( class( object[["na.action"]] ), "exclude" ) ){
+    class( object[["na.action"]] ) <- "omit"
   }
   
   ## update terms of object is formula is provided
   
   if( !is.null( formula ) ){
     formula <- update( formula( object ), formula )
-    object$terms <- terms( formula )
+    object[["terms"]] <- terms( formula )
   } else {
     formula <- formula( object )
   }
@@ -189,20 +191,20 @@ cv.georob <-
   ## as data argument to georob must exist in GlobalEnv)
   
   data <- cbind(
-    get_all_vars( formula( object ), eval( getCall(object)$data ) ),
-    get_all_vars( object$locations.objects$locations, eval( getCall(object)$data ) )
+    get_all_vars( formula( object ), eval( getCall(object)[["data"]] ) ),
+    get_all_vars( object[["locations.objects"]][["locations"]], eval( getCall(object)[["data"]] ) )
   )
   
   ## select subset if appropriate
   
   if( !is.null( subset ) ){
     data <- data[subset, ]
-    object$Tmat <- object$Tmat[subset]
-  } else if( !is.null( getCall(object)$subset ) ){
-   data <- data[eval( getCall(object)$subset ), ]
+    object[["Tmat"]] <- object[["Tmat"]][subset]
+  } else if( !is.null( getCall(object)[["subset"]] ) ){
+   data <- data[eval( getCall(object)[["subset"]] ), ]
   }
   
-#   if( !is.null( getCall(object)$subset ) )
+#   if( !is.null( getCall(object)[["subset"]] ) )
    
   ## define cross-validation sets
   
@@ -226,8 +228,8 @@ cv.georob <-
   }
   
   if( duplicates.in.same.set ){
-    dups <- duplicated( object$Tmat )
-    idups <- match( object$Tmat[dups], object$Tmat[!dups] )
+    dups <- duplicated( object[["Tmat"]] )
+    idups <- match( object[["Tmat"]][dups], object[["Tmat"]][!dups] )
     sets[dups] <- (sets[!dups])[idups]
   }
   
@@ -249,7 +251,7 @@ cv.georob <-
     
   ## loop over all cross-validation sets
   
-  if( .Platform$OS.type == "windows" ){
+  if( .Platform[["OS.type"]] == "windows" ){
     
     ## create a SNOW cluster on windows OS
     
@@ -302,25 +304,25 @@ cv.georob <-
     
   ## create single data frame with cross-validation results 
   
-  result <- t.result[[1]]$pred
-  result$subset <- rep( 1, nrow( t.result[[1]]$pred ) )
+  result <- t.result[[1]][["pred"]]
+  result[["subset"]] <- rep( 1, nrow( t.result[[1]][["pred"]] ) )
   
   for( t.i in 2:length( t.result ) ) {
     result <- rbind( 
       result, 
       data.frame( 
-        t.result[[t.i]]$pred,
-        subset = rep( t.i, nrow( t.result[[t.i]]$pred ) )
+        t.result[[t.i]][["pred"]],
+        subset = rep( t.i, nrow( t.result[[t.i]][["pred"]] ) )
       )
     )
   }
-  t.ix <- sort( result$i, index.return = T )$ix
+  t.ix <- sort( result[["i"]], index.return = T )[["ix"]]
   result <- result[t.ix, ]
-  result$data <- model.response( 
+  result[["data"]] <- model.response( 
     model.frame( formula( object), data, na.action = na.pass ) 
   )
   
-  if( lgn ) result$lgn.data <- exp( result$data )
+  if( lgn ) result[["lgn.data"]] <- exp( result[["data"]] )
   
   result <- result[, -match("i", colnames( result) )]
   
@@ -335,11 +337,11 @@ cv.georob <-
     result[,  c(isubset, idata, ipred, ise)]
   )
   
-  t.fit <- lapply( t.result, function( x ) return( x$fit ) )
+  t.fit <- lapply( t.result, function( x ) return( x[["fit"]] ) )
   
-  if( re.estimate && !all( sapply( t.fit, function(x) x$converged ) ) ) warning(
+  if( re.estimate && !all( sapply( t.fit, function(x) x[["converged"]] ) ) ) warning(
     "lack of covergence for  ", 
-    sum( !sapply( t.fit, function(x) x$converged ) ), " cross-validation sets"
+    sum( !sapply( t.fit, function(x) x[["converged"]] ) ), " cross-validation sets"
   )
   
   result <- list( 
@@ -369,8 +371,9 @@ plot.cv.georob <-
   ## plot method for class "cv.georob"  
   
   ## 2011-12-21 A. Papritz
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
-  x <- x$pred
+  x <- x[["pred"]]
   
   type = match.arg( type )
   
@@ -381,9 +384,9 @@ plot.cv.georob <-
   if( type %in% c( "pit", "mc", "bs" ) ){
     
     result <- validate.predictions( 
-      data = x$data,
-      pred = x$pred,
-      se.pred = x$se,
+      data = x[["data"]],
+      pred = x[["pred"]],
+      se.pred = x[["se"]],
       statistic = type, ncutoff = ncutoff
     )
     
@@ -494,7 +497,7 @@ plot.cv.georob <-
       if( missing( ylab ) ) ylab <- "probability"
       
       matplot( 
-        result$y, 
+        result[["y"]], 
         result[, c( "ghat", "fbar" )], type = "l",
         col = c( "black", "red" ),
         lty = c( "solid", "dashed" ),
@@ -527,9 +530,9 @@ plot.cv.georob <-
       if( missing( ylab ) ) ylab <- "Brier score"
       
       if( add ){
-        lines( result$y, result$bs, col = col, lty = lty, ... )
+        lines( result[["y"]], result[["bs"]], col = col, lty = lty, ... )
       } else {
-        plot( result$y, result$bs, type = "l", col = col, lty = lty, 
+        plot( result[["y"]], result[["bs"]], type = "l", col = col, lty = lty, 
           main = main, xlab = xlab, ylab = ylab, ...
         )
       }
@@ -550,13 +553,14 @@ print.cv.georob <-
   
   ## 2011-10-13 A. Papritz
   ## 2012-12-18 AP invisible(x)
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
-  x <- x$pred
+  x <- x[["pred"]]
   
   st <- validate.predictions( 
-    data = x$data,
-    pred = x$pred,
-    se.pred = x$se,
+    data = x[["data"]],
+    pred = x[["pred"]],
+    se.pred = x[["se"]],
     statistic = "st",
     ...
   )
@@ -582,33 +586,34 @@ summary.cv.georob <-
   
   ## 2011-10-13 A. Papritz
   ## 2012-05-21 ap
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   
-  object <- object$pred
+  object <- object[["pred"]]
   
   bs <- validate.predictions( 
-    data = object$data,
-    pred = object$pred,
-    se.pred = object$se,
-    ncutoff = length( object$data ),
+    data = object[["data"]],
+    pred = object[["pred"]],
+    se.pred = object[["se"]],
+    ncutoff = length( object[["data"]] ),
     statistic = "bs"
   )
   
-  t.d <- diff( bs$y )
-  crps <- sum( bs$bs * 0.5 * ( c( 0., t.d ) + c( t.d, 0. ) ) )
+  t.d <- diff( bs[["y"]] )
+  crps <- sum( bs[["bs"]] * 0.5 * ( c( 0., t.d ) + c( t.d, 0. ) ) )
   
   st <- validate.predictions( 
-    data = object$data,
-    pred = object$pred,
-    se.pred = object$se,
+    data = object[["data"]],
+    pred = object[["pred"]],
+    se.pred = object[["se"]],
     statistic = "st"
   )
   
-  if( !is.null( object$lgn.pred ) ){
+  if( !is.null( object[["lgn.pred"]] ) ){
     st.lgn <- validate.predictions( 
-      data = object$lgn.data,
-      pred = object$lgn.pred,
-      se.pred = object$lgn.se,
+      data = object[["lgn.data"]],
+      pred = object[["lgn.pred"]],
+      se.pred = object[["lgn.se"]],
       statistic = "st"
     )
   } else {
@@ -621,12 +626,12 @@ summary.cv.georob <-
 
   ## compute standard errors of criteria across cross-validation sets
   
-  if( se && !is.null( object$subset ) ){
+  if( se && !is.null( object[["subset"]] ) ){
     
     criteria <- t( sapply(
         tapply(
           1:nrow( object ),
-          factor( object$subset ),
+          factor( object[["subset"]] ),
           function( i, data, pred, se.pred, lgn.data, lgn.pred, lgn.se.pred ){
             
             bs <- validate.predictions( 
@@ -637,8 +642,8 @@ summary.cv.georob <-
               statistic = "bs"
             )
             
-            t.d <- diff( bs$y )
-            crps <- c( crps = sum( bs$bs * 0.5 * ( c( 0., t.d ) + c( t.d, 0. ) ) ) )
+            t.d <- diff( bs[["y"]] )
+            crps <- c( crps = sum( bs[["bs"]] * 0.5 * ( c( 0., t.d ) + c( t.d, 0. ) ) ) )
             
             st <- validate.predictions( 
               data = data[i],
@@ -663,12 +668,12 @@ summary.cv.georob <-
             return( c( st, st.lgn, crps ) )
             
           },
-          data = object$data,
-          pred = object$pred,
-          se.pred = object$se,
-          lgn.data = object$lgn.data,
-          lgn.pred = object$lgn.pred,
-          lgn.se.pred = object$lgn.se
+          data = object[["data"]],
+          pred = object[["pred"]],
+          se.pred = object[["se"]],
+          lgn.data = object[["lgn.data"]],
+          lgn.pred = object[["lgn.pred"]],
+          lgn.se.pred = object[["lgn.se"]]
         ),
         function( x ) x
       ))
@@ -678,13 +683,13 @@ summary.cv.georob <-
       function( x ) sd( x ) / sqrt( length( x ) )
     )
     
-    result$se.st <- se.criteria[c( "me", "mede", "rmse", "made", "qne", "msse", "medsse")]
-    result$se.crps <- se.criteria["crps"]
+    result[["se.st"]] <- se.criteria[c( "me", "mede", "rmse", "made", "qne", "msse", "medsse")]
+    result[["se.crps"]] <- se.criteria["crps"]
     if( !is.null( st.lgn ) ){
-      result$se.st.lgn <- se.criteria[
+      result[["se.st.lgn"]] <- se.criteria[
         c( "me.lgn", "mede.lgn", "rmse.lgn", "made.lgn", "qne.lgn", "msse.lgn", "medsse.lgn")
       ]
-      names( result$se.st.lgn ) <- gsub( ".lgn", "", names( result$se.st.lgn ) )
+      names( result[["se.st.lgn"]] ) <- gsub( ".lgn", "", names( result[["se.st.lgn"]] ) )
     }
     
   }
@@ -709,11 +714,12 @@ print.summary.cv.georob <-
   ## 2011-12-20 A. Papritz
   ## 2012-05-21 ap
   ## 2012-12-18 AP invisible(x)
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
 
-  result <- c( x$st, crps = x$crps )
-  if( !is.null( x$se.st ) ){
-    result <- rbind( result, c( x$se.st, crps = x$se.crps ) )
+  result <- c( x[["st"]], crps = x[["crps"]] )
+  if( !is.null( x[["se.st"]] ) ){
+    result <- rbind( result, c( x[["se.st"]], crps = x[["se.crps"]] ) )
     rownames( result ) <- c( "", "se" )
   }
   
@@ -723,10 +729,10 @@ print.summary.cv.georob <-
     quote = FALSE
   )
   
-  if( !is.null( x$st.lgn ) ){
-    result <- x$st.lgn
-    if( !is.null( x$se.st.lgn ) ){
-      result <- rbind( x$st.lgn, x$se.st.lgn )
+  if( !is.null( x[["st.lgn"]] ) ){
+    result <- x[["st.lgn"]]
+    if( !is.null( x[["se.st.lgn"]] ) ){
+      result <- rbind( x[["st.lgn"]], x[["se.st.lgn"]] )
       rownames( result ) <- c( "", "se" )
     }
     
@@ -755,14 +761,15 @@ rstudent.cv.georob <-
   ## ...       further arguments (currently not used)
   
   ## 2011-10-13 A. Papritz
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   if( !identical( class( model )[1], "cv.georob" ) ) stop(
     "model is not of class 'cv.georob'" 
   )
   
-  model <- model$pred
+  model <- model[["pred"]]
   
-  ( model$data - model$pred ) / model$se
+  ( model[["data"]] - model[["pred"]] ) / model[["se"]]
   
 }
 
@@ -787,10 +794,10 @@ rstudent.cv.georob <-
 #   res <- geoR::xvalid( model = object, ... )
 #   
 #   if( !is.null( attr( res, "geodata.xvalid" ) ) ){
-#     attr( res, "geodata.xvalid" ) <- call.fc$geodata
+#     attr( res, "geodata.xvalid" ) <- call.fc[["geodata"]]
 #   }
 #   if( !is.null( attr( res, "locations.xvalid" ) ) ){
-#     attr( res, "locations.xvalid" ) <- call.fc$locations.xvalid
+#     attr( res, "locations.xvalid" ) <- call.fc[["locations.xvalid"]]
 #   }
 #   
 #   return(res)
@@ -816,10 +823,10 @@ rstudent.cv.georob <-
 #   res <- geoR::xvalid( model = object, geodata = geodata, ... )
 #   
 #   if( !is.null( attr( res, "geodata.xvalid" ) ) ){
-#     attr( res, "geodata.xvalid" ) <- call.fc$geodata
+#     attr( res, "geodata.xvalid" ) <- call.fc[["geodata"]]
 #   }
 #   if( !is.null( attr( res, "locations.xvalid" ) ) ){
-#     attr( res, "locations.xvalid" ) <- call.fc$locations.xvalid
+#     attr( res, "locations.xvalid" ) <- call.fc[["locations.xvalid"]]
 #   }
 #   
 #   return(res)
@@ -840,24 +847,9 @@ validate.predictions <-
   ## function computes several statistics to validate probabilistic
   ## predictions, cf.  Gneiting et al., 2007, JRSSB
   
-  ## Arguments:
-  
-  ## data					numeric vector with data
-  ## pred					numeric vector with predictions
-  ## se.pred			numeric vector with prediction standard errors
-  ## statistic					character scalar specifying  the statistic to compute
-  ##							possible values are:
-  ##							"pit"			probability integral transformation
-  ##							"mc"			empirical cdf of data and mean predictive 
-  ##												normal distribution
-  ##							"bs"			Brier score
-  ##							"st"			basic statistics such as mean error, mean
-  ##												mean squared error, mean squared standardized error
-  ##												and robust equivalents
-  ## ncutoff			number of quantiles (statistic == "mc") or number of cutoffs (statistic = "bs")
-  
   # 2011-20-21 A. Papritz
   # 2012-05-04 AP coping with NAs
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   statistic = match.arg( statistic )
   
@@ -903,7 +895,7 @@ validate.predictions <-
       
       t.bla <- t(
         sapply(
-          margin.calib$y,
+          margin.calib[["y"]],
           function( q, m, s, y ){
             t.p <- pnorm( q, mean = m, sd = s )
             c( 

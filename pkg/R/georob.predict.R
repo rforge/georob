@@ -80,6 +80,8 @@ function(
   ##               and prediction points
   ## 2013-04-23 AP new names for robustness weights
   ## 2013-05-23 AP correct handling of missing observations
+  ## 2013-05-06 AP changes for solving estimating equations for xi
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
 
   
   ##  ##############################################################################
@@ -625,7 +627,7 @@ function(
   ## extract the coordinates of the support locations
   
   locations.coords <- 
-  object[["locations.objects"]][["coordinates"]][!duplicated( object[["Tmat"]] ), , drop = FALSE]
+    object[["locations.objects"]][["coordinates"]][!duplicated( object[["Tmat"]] ), , drop = FALSE]
   
   ## if needed compute missing covariance matrices
   
@@ -634,10 +636,10 @@ function(
     !is.matrix( object[["cov"]][["cov.delta.bhat"]] )
   cov.delta.bhat.betahat <- is.null( object[["cov"]][["cov.delta.bhat.betahat"]] )
   cov.bhat    <- extended.output & (
-    is.null( object[["cov"]]$cov.bhat ) || !is.matrix( object[["cov"]]$cov.bhat )
+    is.null( object[["cov"]][["cov.bhat"]] ) || !is.matrix( object[["cov"]][["cov.bhat"]] )
   )
-  cov.bhat.betahat  <-  extended.output & is.null( object[["cov"]]$cov.bhat.betahat )
-  cov.p.t  <-  extended.output & is.null( object[["cov"]]$aux.cov.pred.target )
+  cov.bhat.betahat  <-  extended.output & is.null( object[["cov"]][["cov.bhat.betahat"]] )
+  cov.p.t  <-  extended.output & is.null( object[["cov"]][["cov.pred.target"]] )
   
   if( any( c( cov.betahat, cov.delta.bhat, cov.delta.bhat.betahat, 
         extended.output & ( cov.bhat || cov.bhat.betahat || cov.p.t )
@@ -645,34 +647,14 @@ function(
     )
   ){ ## cov
     
-    if( is.null( object[["Valpha.objects"]]$Valpha.inverse ) || 
-      is.null( object[["Valpha.objects"]]$Valpha.ilcf ) 
-    ) stop( 
-      "'Valpha.objects' incomplete or missing in georob object;\n", 
-      "'Valpha.objects' must include components 'Valpha.inverse' and 'Valpha.ilcf'"
-    )
-    if( is.null( object$expectations ) )
-    stop( 
-      "'expectations' missing in georob object;\n",
-      "use 'full.output = TRUE' when fitting the model"
-    )
-    
-    if( extended.output && cov.bhat && is.null( object[["Valpha.objects"]]$Valpha.ucf ) ){
-      
-      ## compute upper cholesky factor of correlation matrix Valpha
-      ## which is needed to compute cov( bhat )
-      
-      object[["Valpha.objects"]]$Valpha.ucf <- t( solve( object[["Valpha.objects"]]$Valpha.ilcf ) )
-      
-    }
-    
     r.cov <- compute.covariances(
       Valpha.objects = object[["Valpha.objects"]],
-      rweights = object$rweights,
+      Aalpha = object[["Aalpha"]], Palpha = object[["Palpha"]],
+      rweights = object[["rweights"]],
       XX = X, TT = object[["Tmat"]], names.yy = rownames( model.frame( object ) ),
-      nugget = object$param["nugget"],
-      eta = sum( object$param[c( "variance", "snugget")] ) / object$param["nugget"],
-      expectations = object$expectations,
+      nugget = object[["param"]]["nugget"],
+      eta = sum( object[["param"]][c( "variance", "snugget")] ) / object[["param"]]["nugget"],
+      expectations = object[["expectations"]],
       cov.bhat = cov.bhat, full.cov.bhat = cov.bhat,
       cov.betahat = cov.betahat, 
       cov.bhat.betahat = cov.bhat.betahat,
@@ -684,7 +666,7 @@ function(
       verbose = verbose
     )
     
-    if( r.cov$error ) stop( 
+    if( r.cov[["error"]] ) stop( 
       "an error occurred when computing the covariances of fixed and random effects",
     )
     
@@ -697,8 +679,8 @@ function(
     if( extended.output && cov.bhat )   object[["cov"]][["cov.bhat"]] <- r.cov[["cov.bhat"]]
     if( extended.output && cov.bhat.betahat ) object[["cov"]][["cov.bhat.betahat"]] <- 
       r.cov[["cov.bhat.betahat"]]
-    if( extended.output && cov.p.t ) object[["cov"]][["aux.cov.pred.target"]] <- 
-      r.cov[["aux.cov.pred.target"]]
+    if( extended.output && cov.p.t ) object[["cov"]][["cov.pred.target"]] <- 
+      r.cov[["cov.pred.target"]]
     
   } ## end cov
   
@@ -746,7 +728,7 @@ function(
       )
     )
     
-    cov.p.t <- object[["cov"]][["aux.cov.pred.target"]]
+    cov.p.t <- object[["cov"]][["cov.pred.target"]]
     
   } else {
     
@@ -851,8 +833,8 @@ function(
       pred <- switch(
         type,
         "response" = model.response( model.frame( object ) ),
-        "signal" = object$fitted.values + object[["bhat"]][object[["Tmat"]]],
-        "trend" = object$fitted.values
+        "signal" = object[["fitted.values"]] + object[["bhat"]][object[["Tmat"]]],
+        "trend" = object[["fitted.values"]] 
       )
       
       var.pred <- NULL
@@ -860,8 +842,7 @@ function(
       cov.pred.target <- NULL
       
       if( extended.output ){
-        V <- sum( object[["param"]][c("variance", "snugget")] ) *
-          t(object[["Valpha.objects"]][["Valpha.ucf"]]) %*% object[["Valpha.objects"]][["Valpha.ucf"]]
+        V <- sum( object[["param"]][c("variance", "snugget")] ) * object[["Valpha.objects"]][["Valpha"]]
       }
       
       t.result <- switch(
@@ -979,23 +960,23 @@ function(
         }
       }
       
-      result <- as.data.frame( napredict( object$na.action, as.matrix( result ) ) )
+      result <- as.data.frame( napredict( object[["na.action"]], as.matrix( result ) ) )
             
       if( full.covmat ){
         
         result <- c(
           list( pred = result, 
-            mse.pred = napredict( object$na.action, t( napredict( object$na.action, mse.pred ) ) ) 
+            mse.pred = napredict( object[["na.action"]], t( napredict( object[["na.action"]], mse.pred ) ) ) 
           ), 
           if( !is.null(var.pred) ) list( 
-            var.pred = napredict( object$na.action, t( napredict( object$na.action, var.pred ) ) ) 
+            var.pred = napredict( object[["na.action"]], t( napredict( object[["na.action"]], var.pred ) ) ) 
           ),
           if( !is.null(var.target) ) list( 
-            var.target = napredict( object$na.action, t( napredict( object$na.action, var.target ) ) )
+            var.target = napredict( object[["na.action"]], t( napredict( object[["na.action"]], var.target ) ) )
           ),
           if( !is.null(cov.pred.target) ) list( 
             cov.pred.target = napredict( 
-              object$na.action, t( napredict( object$na.action, cov.pred.target ) ) 
+              object[["na.action"]], t( napredict( object[["na.action"]], cov.pred.target ) ) 
             )
           )
         )
@@ -1294,7 +1275,7 @@ function(
   
   if( missing( newdata ) || is.null( newdata ) ){
     
-    coords <- napredict( object$na.action, object[["locations.objects"]][["coordinates"]] )
+    coords <- napredict( object[["na.action"]], object[["locations.objects"]][["coordinates"]] )
     
     if( !identical( type, "terms" ) ){
       if( full.covmat ){

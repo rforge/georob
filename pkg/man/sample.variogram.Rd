@@ -1,4 +1,4 @@
-% 2012-12-21 A. Papritz
+% 2013-06-12 A. Papritz
 % R CMD Rdconv -t html -o bla.html sample.variogram.Rd ; open bla.html; R CMD Rd2pdf --force sample.variogram.Rd; 
 
 \encoding{macintosh}
@@ -25,11 +25,11 @@ sample.variogram(response, locations, lag.class.def,
    
 \method{summary}{sample.variogram}(object, ...)
 
-\method{plot}{sample.variogram}(x, type = "p", add = FALSE, xlim = c(0, max(x$lag.dist)),
-    ylim = c(0, 1.1 * max(x$gamma)), col, pch, cex = 0.8, 
+\method{plot}{sample.variogram}(x, type = "p", add = FALSE, xlim = c(0, max(x[["lag.dist"]])),
+    ylim = c(0, 1.1 * max(x[["gamma"]])), col, pch, cex = 0.8, 
     xlab = "lag distance", ylab = "semivariance", 
     annotate.npairs = FALSE, npairs.pos = 3, npairs.cex = 0.7, 
-    legend = nlevels(x$xy.angle) > 1 || nlevels(x$xz.angle) > 1, 
+    legend = nlevels(x[["xy.angle"]]) > 1 || nlevels(x[["xz.angle"]]) > 1, 
     legend.pos = "topleft", ...)
    
 }
@@ -188,14 +188,14 @@ with the following components:
 data(wolfcamp, package = "geoR")
 
 ## fitting an isotropic IRF(0) model
-r.sv.iso <- sample.variogram(wolfcamp$data, locations = wolfcamp[[1]], 
+r.sv.iso <- sample.variogram(wolfcamp[["data"]], locations = wolfcamp[[1]], 
     lag.class.def = seq(0, 200, by = 15))
 
 \dontrun{
 plot( r.sv.iso, type = "l")}
 
 ## fitting an anisotropic IRF(0) model
-r.sv.aniso <- sample.variogram(wolfcamp$data,
+r.sv.aniso <- sample.variogram(wolfcamp[["data"]],
     locations = wolfcamp[[1]], lag.class.def = seq(0, 200, by = 15),
     xy.angle.def = c(0., 22.5, 67.5, 112.5, 157.5, 180.))
 \dontrun{

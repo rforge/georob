@@ -1,4 +1,4 @@
-% 2012-12-11 A. Papritz
+% 2013-06-12 A. Papritz
 % R CMD Rdconv -t html -o bla.html compress.Rd ; open bla.html; R CMD Rd2pdf --force compress.Rd; 
 \name{compress}
 \alias{compress}
@@ -69,7 +69,7 @@ r.logzn.rob <- georob(log(zinc) ~ sqrt(dist) + ffreq, data = meuse, locations = 
     param = c( variance = 0.15, nugget = 0.05, scale = 200 ),
     tuning.psi = 1, initial.param = TRUE)
   
-cov2cor( expand(r.logzn.rob$cov$cov.betahat) )
+cov2cor( expand(r.logzn.rob[["cov"]][["cov.betahat"]]) )
 }
 }
 

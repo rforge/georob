@@ -1,4 +1,4 @@
-% 2012-12-03 A. Papritz
+% 2013-06-12 A. Papritz
 % R CMD Rdconv -t html -o bla.html predict.georob.Rd ; open bla.html; R CMD Rd2pdf --force predict.georob.Rd; 
 
 \encoding{macintosh}
@@ -72,7 +72,7 @@ well as model terms for display by \code{\link[stats]{termplot}}.
   
   \item{locations}{an optional one-sided formula specifying what variables
   of \code{newdata} are the coordinates of the prediction points\cr
-  (default: \code{object$locatons.objects$locations}).}
+  (default: \code{object[["locatons.objects"]]$locations}).}
   
   \item{full.covmat}{logical controlling whether the full covariance matrix
   of the prediction errors is returned (\code{TRUE}) or only the vector
@@ -254,10 +254,10 @@ str(r.pred.points$pred@data)
 r.backtf.pred.points <- lgnpp(r.pred.points)
 str(r.backtf.pred.points$pred@data)
 
-spplot(r.backtf.pred.points$pred, zcol = "lgn.pred", main = "Zn content")
+spplot(r.backtf.pred.points[["pred"]], zcol = "lgn.pred", main = "Zn content")
 
 ## predicting mean Zn content for whole area
-r.block <- lgnpp(r.pred.points, is.block = TRUE, all.pred = r.backtf.pred.points$pred)
+r.block <- lgnpp(r.pred.points, is.block = TRUE, all.pred = r.backtf.pred.points[["pred"]])
 r.block
 
 ## block predictions of log(Zn)

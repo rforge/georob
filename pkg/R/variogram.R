@@ -18,6 +18,7 @@ sample.variogram <-
   #                   
   # author:           A. Papritz
   # date:             2012-04-13
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   estimator <- match.arg( estimator )
     
@@ -270,18 +271,18 @@ sample.variogram <-
     
     # mean angle of lag pairs
     
-    t.aux <- r.result$lag.dist * sin( xz.angle.mean[t.sel] / 180. * pi )
-    r.result$lag.x <- t.aux * sin( xy.angle.mean[t.sel] / 180. * pi )
-    r.result$lag.y <- t.aux * cos( xy.angle.mean[t.sel] / 180. * pi )
-    r.result$lag.z <- r.result$lag.dist * cos( xz.angle.mean[t.sel] / 180. * pi )
+    t.aux <- r.result[["lag.dist"]] * sin( xz.angle.mean[t.sel] / 180. * pi )
+    r.result[["lag.x"]] <- t.aux * sin( xy.angle.mean[t.sel] / 180. * pi )
+    r.result[["lag.y"]] <- t.aux * cos( xy.angle.mean[t.sel] / 180. * pi )
+    r.result[["lag.z"]] <- r.result[["lag.dist"]] * cos( xz.angle.mean[t.sel] / 180. * pi )
     
   } else {
     
-    t.aux <- r.result$lag.dist * sin( xz.angle.mid.class[ as.integer( r.result$xz.angle ) ] / 180. * pi )
-    r.result$lag.x <- t.aux * sin( xy.angle.mid.class[ as.integer( r.result$xy.angle ) ] / 180. * pi )
-    r.result$lag.y <- t.aux * cos( xy.angle.mid.class[ as.integer( r.result$xy.angle ) ] / 180. * pi )
-    r.result$lag.z <- r.result$lag.dist * 
-      cos( xz.angle.mid.class[ as.integer( r.result$xz.angle ) ] / 180. * pi )
+    t.aux <- r.result[["lag.dist"]] * sin( xz.angle.mid.class[ as.integer( r.result[["xz.angle"]] ) ] / 180. * pi )
+    r.result[["lag.x"]] <- t.aux * sin( xy.angle.mid.class[ as.integer( r.result[["xy.angle"]] ) ] / 180. * pi )
+    r.result[["lag.y"]] <- t.aux * cos( xy.angle.mid.class[ as.integer( r.result[["xy.angle"]] ) ] / 180. * pi )
+    r.result[["lag.z"]] <- r.result[["lag.dist"]] * 
+      cos( xz.angle.mid.class[ as.integer( r.result[["xz.angle"]] ) ] / 180. * pi )
     
   }
   
@@ -306,6 +307,7 @@ summary.sample.variogram <-
   ## Summary method for class summary.sample.variogram
   
   ## 2012-11-12 A. Papritz
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   ans <- object[c( "lag.dist", "npairs", "xy.angle", "xz.angle" ) ]
   attr( ans, "estimator" ) <- attr( object, "estimator" )
@@ -327,17 +329,18 @@ print.summary.sample.variogram <-
   
   ## 2012-11-12 A. Papritz
   ## 2012-12-18 AP invisible(x)
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   cat( "\nSample variogram estimator:", attr( x, "estimator" ), "\n" )
   
   cat( "\nSummary of lag distances\n" )
-  print( summary( x$lag.dist ) )
+  print( summary( x[["lag.dist"]] ) )
   
   cat( "\nSummary of number of pairs per lag and distance classes\n" )
-  print( summary( x$npairs ) )
+  print( summary( x[["npairs"]] ) )
   
-  cat( "\nAngle classes in xy-plane:", levels( x$xy.angle ), "\n" )
-  cat( "Angle classes in xz-plane:", levels( x$xz.angle ), "\n" )
+  cat( "\nAngle classes in xy-plane:", levels( x[["xy.angle"]] ), "\n" )
+  cat( "Angle classes in xz-plane:", levels( x[["xz.angle"]] ), "\n" )
   
   invisible( x )
   
@@ -349,15 +352,15 @@ plot.sample.variogram <-
   function(
     x,
     type = "p", add = FALSE, 
-    xlim = c( 0., max( x$lag.dist ) ),
-    ylim = c( 0, 1.1 * max( x$gamma ) ),
+    xlim = c( 0., max( x[["lag.dist"]] ) ),
+    ylim = c( 0, 1.1 * max( x[["gamma"]] ) ),
     col,
     pch,
     cex = 0.8,
     xlab = "lag distance", ylab = "semivariance",
     annotate.npairs = FALSE,
     npairs.pos = 3, npairs.cex = 0.7,
-    legend = nlevels( x$xy.angle ) > 1 || nlevels( x$xz.angle ) > 1,
+    legend = nlevels( x[["xy.angle"]] ) > 1 || nlevels( x[["xz.angle"]] ) > 1,
     legend.pos = "topleft",
     ...
   )
@@ -367,7 +370,8 @@ plot.sample.variogram <-
   
   ## 2012-12-12 A. Papritz
   ## 2012-12-21 AP correction for using col and pch
-  ## 2913-05-12 AP correction for using ...
+  ## 2013-05-12 AP correction for using ...
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   if( !add ) plot( 
     gamma ~ lag.dist, x, type = "n",
@@ -375,19 +379,19 @@ plot.sample.variogram <-
   )
   
   if( missing( col ) ){
-    col <- 1:nlevels( x$xy.angle )
-  } else if( length( col ) < nlevels( x$xy.angle ) ) stop(
+    col <- 1:nlevels( x[["xy.angle"]] )
+  } else if( length( col ) < nlevels( x[["xy.angle"]] ) ) stop(
     "number of colors less than number of directions in x-y-plane for which semivariances were computed"
   )
   if( missing( pch ) ){
-    pch <- 1:nlevels( x$xz.angle )
-  } else if( length( pch ) < nlevels( x$xz.angle ) ) stop(
+    pch <- 1:nlevels( x[["xz.angle"]] )
+  } else if( length( pch ) < nlevels( x[["xz.angle"]] ) ) stop(
     "number of colors less than number of directions in x-z-plane for which semivariances were computed"
   )
   
   tapply( 
     1:nrow( x ),
-    list( x$xy.angle, x$xz.angle ),
+    list( x[["xy.angle"]], x[["xz.angle"]] ),
     function( i, x, type, col, pch, cex ){
       points( 
         gamma ~ lag.dist, x, subset = i, 
@@ -412,16 +416,16 @@ plot.sample.variogram <-
     legend(
       x = legend.pos, bty = "n", 
       col = c( 
-        1:nlevels( x$xy.angle ), 
-        if( nlevels( x$xz.angle ) > 1 ) rep( 1, nlevels( x$xz.angle ) ) 
+        1:nlevels( x[["xy.angle"]] ), 
+        if( nlevels( x[["xz.angle"]] ) > 1 ) rep( 1, nlevels( x[["xz.angle"]] ) ) 
       ),
       pch = c( 
-        rep( 1, nlevels( x$xy.angle ) ), 
-        if( nlevels( x$xz.angle ) > 1 ) 1:nlevels( x$xz.angle ) 
+        rep( 1, nlevels( x[["xy.angle"]] ) ), 
+        if( nlevels( x[["xz.angle"]] ) > 1 ) 1:nlevels( x[["xz.angle"]] ) 
       ),
       legend = c( 
-        paste( "xy.angle:", levels( x$xy.angle ) ), 
-        if( nlevels( x$xz.angle ) > 1 ) paste( "xz.angle:", levels( x$xz.angle ) )
+        paste( "xy.angle:", levels( x[["xy.angle"]] ) ), 
+        if( nlevels( x[["xz.angle"]] ) > 1 ) paste( "xz.angle:", levels( x[["xz.angle"]] ) )
       ),
       pt.cex = cex
     )
@@ -451,7 +455,7 @@ fit.variogram.model <-
     )[ names(param) ],
     aniso = c( f1 = 1., f2 = 1., omega = 90., phi = 90., zeta = 0. ),
     fit.aniso = c( f1 = FALSE, f2 = FALSE, omega = FALSE, phi = FALSE, zeta = FALSE ),
-    max.lag = max( sv$lag.dist ),
+    max.lag = max( sv[["lag.dist"]] ),
     min.npairs = 30,
     weighting.method = c(  "cressie", "equal", "npairs"),
     hessian = TRUE,
@@ -464,6 +468,7 @@ fit.variogram.model <-
   ## sample.variogram
   
   ## 2012-12-10 A. Papritz
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   ## auxiliary function called by optim to compute objective function
   
@@ -519,9 +524,9 @@ fit.variogram.model <-
     
     param.aniso.item <- get( "param.aniso.item", pos = as.environment( envir ) )
     
-    param.aniso.item$param <- param
-    param.aniso.item$aniso$aniso <- aniso
-    param.aniso.item$aniso$sincos <- list(
+    param.aniso.item[["param"]] <- param
+    param.aniso.item[["aniso"]][["aniso"]] <- aniso
+    param.aniso.item[["aniso"]][["sincos"]] <- list(
       co = unname( cos( aniso["omega"] ) ),
       so = unname( sin( aniso["omega"] ) ),
       cp = unname( cos( aniso["phi"] ) ),
@@ -529,23 +534,23 @@ fit.variogram.model <-
       cz = unname( cos( aniso["zeta"] ) ),
       sz = unname( sin( aniso["zeta"] ) )
     )
-    param.aniso.item$aniso$rotmat <- with( 
-      param.aniso.item$aniso$sincos,
+    param.aniso.item[["aniso"]][["rotmat"]] <- with( 
+      param.aniso.item[["aniso"]][["sincos"]],
       rbind(
         c(             sp*so,             sp*co,       cp ),
         c( -cz*co + sz*cp*so,  co*sz*cp + cz*so,   -sp*sz ),
         c( -co*sz - cz*cp*so, -cz*co*cp + sz*so,    cz*sp )
       )
     )
-    param.aniso.item$aniso$sclmat <- with(
-      param.aniso.item$aniso,
+    param.aniso.item[["aniso"]][["sclmat"]] <- with(
+      param.aniso.item[["aniso"]],
       1. / c( 1., aniso[ c("f1", "f2") ] )
     )
     
     ## output parameters
     
     t.param <- param
-    if( !isotropic ) t.param <- c( t.param, param.aniso.item$aniso$aniso )
+    if( !isotropic ) t.param <- c( t.param, param.aniso.item[["aniso"]][["aniso"]] )
     if( verbose > 0 ) {
       cat(
         format(
@@ -559,7 +564,7 @@ fit.variogram.model <-
         
     t.model <- compute.semivariance(
       lag.vectors, 
-      variogram.model, param, param.aniso.item$aniso 
+      variogram.model, param, param.aniso.item[["aniso"]] 
     )
     
     if( identical( class( t.model ), "try-error" ) || any( is.na( t.model ) ) ){
@@ -587,9 +592,9 @@ fit.variogram.model <-
     
     ## store copies of model semivariance, residuals and weights
     
-    param.aniso.item$fitted <- t.model
-    param.aniso.item$residuals <- t.res
-    param.aniso.item$weights <- t.weights
+    param.aniso.item[["fitted"]] <- t.model
+    param.aniso.item[["residuals"]] <- t.res
+    param.aniso.item[["weights"]] <- t.weights
     
     ## store param.aniso.item
     
@@ -807,7 +812,7 @@ fit.variogram.model <-
   
   ## select lag distances that are used for fitting
   
-  t.lag.select <- sv$lag.dist <= max.lag & sv$npairs >= min.npairs
+  t.lag.select <- sv[["lag.dist"]] <= max.lag & sv[["npairs"]] >= min.npairs
   
   if( verbose > 0 ) cat( 
     format(
@@ -858,8 +863,8 @@ fit.variogram.model <-
     lag.vectors = as.matrix(
       sv[t.lag.select, c( "lag.x", "lag.y", "lag.z" )]
     ),
-    gamma = sv$gamma[t.lag.select],
-    npairs = sv$npairs[t.lag.select],
+    gamma = sv[["gamma"]][t.lag.select],
+    npairs = sv[["npairs"]][t.lag.select],
     weighting.method = weighting.method,
     verbose = verbose
   )
@@ -867,32 +872,32 @@ fit.variogram.model <-
   ## get param.aniso.item
   
   param.aniso.item <- get( "param.aniso.item", pos = as.environment( envir ) )
-  param <- param.aniso.item$param
-  aniso <- param.aniso.item$aniso$aniso
+  param <- param.aniso.item[["param"]]
+  aniso <- param.aniso.item[["aniso"]][["aniso"]]
   
   ## collect results
   
   r.result <- list(
-    sse = r.fit$value,
+    sse = r.fit[["value"]],
     variogram.model = variogram.model,
-    param = param.aniso.item$param, fit.param = fit.param,
-    aniso = param.aniso.item$aniso,
+    param = param.aniso.item[["param"]], fit.param = fit.param,
+    aniso = param.aniso.item[["aniso"]],
     param.tf = param.tf,
     fwd.tf = fwd.tf,
     bwd.tf = bwd.tf,
     converged = if( sum( c( fit.param, fit.aniso ) ) == 0 ){ 
       NA
     } else {
-      r.fit$convergence == 0
+      r.fit[["convergence"]] == 0
     },
-    convergence.code = r.fit$convergence,      
-    iter = r.fit$counts,
+    convergence.code = r.fit[["convergence"]],      
+    iter = r.fit[["counts"]],
     call = cl,
-    residuals = param.aniso.item$residuals,
-    fitted = param.aniso.item$fitted,
-    weights = param.aniso.item$weights
+    residuals = param.aniso.item[["residuals"]],
+    fitted = param.aniso.item[["fitted"]],
+    weights = param.aniso.item[["weights"]]
   )
-  if( hessian ) r.result$hessian <- r.fit$hessian
+  if( hessian ) r.result[["hessian"]] <- r.fit[["hessian"]]
   
   class( r.result ) <- "fitted.variogram"
   
@@ -915,12 +920,13 @@ print.fitted.variogram <-
   
   ## 2012-04-13 A. Papritz
   ## 2012-12-18 AP invisible(x)
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   cat("\n")
-  cat( "Variogram: ", x$variogram.model, "\n" )
-  param <- x$param
+  cat( "Variogram: ", x[["variogram.model"]], "\n" )
+  param <- x[["param"]]
   names( param ) <- ifelse(
-    x$fit.param,
+    x[["fit.param"]],
     names( param ),
     paste( names( param ), "(fixed)", sep = "" )
   )
@@ -931,13 +937,13 @@ print.fitted.variogram <-
   
   ## print anisotropy parameters
   
-  if( !x$aniso$isotropic ){
+  if( !x[["aniso"]][["isotropic"]] ){
     
     cat("\n")
     cat( "Anisotropy parameters: ", "\n" )
-    aniso <- x$aniso$aniso * c( rep(1, 2), rep( 180/pi, 3 ) )
+    aniso <- x[["aniso"]][["aniso"]] * c( rep(1, 2), rep( 180/pi, 3 ) )
     names( aniso ) <- ifelse(
-      x$aniso$fit.aniso,
+      x[["aniso"]][["fit.aniso"]],
       names( aniso ),
       paste( names( aniso ), "(fixed)", sep = "" )
     )
@@ -965,51 +971,52 @@ summary.fitted.variogram <-
   ## summary method for fitted.variogram
   
   ## 2012-12-10 A. Papritz
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
 
   ans <- object[c(
     "call", "residuals", "weights", "converged", "convergence.code", 
     "iter", "sse", "variogram.model", "fit.param"
   )]
   
-  if( !object$aniso$isotropic ) ans$fit.param <- c( 
-    ans$fit.param, object$aniso$fit.aniso
+  if( !object[["aniso"]][["isotropic"]] ) ans[["fit.param"]] <- c( 
+    ans[["fit.param"]], object[["aniso"]][["fit.aniso"]]
   )
       
-  ans$param <- as.matrix( object$param, ncol = 1 )
+  ans[["param"]] <- as.matrix( object[["param"]], ncol = 1 )
   
-  if( !object$aniso$isotropic ) ans$param <- rbind( 
-    ans$param,
-    as.matrix( object$aniso$aniso, ncol = 1 ) * c( rep( 1, 2 ), rep( 180/pi, 3 ) )
+  if( !object[["aniso"]][["isotropic"]] ) ans[["param"]] <- rbind( 
+    ans[["param"]],
+    as.matrix( object[["aniso"]][["aniso"]], ncol = 1 ) * c( rep( 1, 2 ), rep( 180/pi, 3 ) )
   )
   
-  colnames( ans$param ) <- "Estimate"
+  colnames( ans[["param"]] ) <- "Estimate"
   
   ## compute confidence intervals of variogram parameters from observed
   ## Fisher information matrix (Gaussian REML only)
   
-  if( !is.null( object$hessian ) ){
+  if( !is.null( object[["hessian"]] ) ){
     
     ## initialization
     
     cor.tf.param <- cov.tf.param <- matrix( 
-      NA, nrow = nrow( object$hessian ), ncol = nrow( object$hessian ),
-      dimnames = dimnames( object$hessian )
+      NA, nrow = nrow( object[["hessian"]] ), ncol = nrow( object[["hessian"]] ),
+      dimnames = dimnames( object[["hessian"]] )
     )
     
-    se <- rep( NA, nrow( object$hessian ) )
-    names( se ) <- rownames( object$hessian)
+    se <- rep( NA, nrow( object[["hessian"]] ) )
+    names( se ) <- rownames( object[["hessian"]])
     
-    ci <- matrix( NA, nrow = nrow( ans$param ), ncol = 2 )
+    ci <- matrix( NA, nrow = nrow( ans[["param"]] ), ncol = 2 )
     colnames( ci ) <- c( "Lower", "Upper" )
-    rownames( ci ) <- rownames( ans$param )
+    rownames( ci ) <- rownames( ans[["param"]] )
     
     ## select parameters that are not on boundary of parameter space
     
-    sr  <- !apply( object$hessian, 1, function( x ) all( is.na( x ) ) )
+    sr  <- !apply( object[["hessian"]], 1, function( x ) all( is.na( x ) ) )
     
     if( sum( sr ) > 0 ){
       
-      t.chol <- try( chol( object$hessian[sr, sr] ), silent = TRUE )
+      t.chol <- try( chol( object[["hessian"]][sr, sr] ), silent = TRUE )
       
       if( !identical( class( t.chol ), "try-error" ) ){
         
@@ -1026,15 +1033,15 @@ summary.fitted.variogram <-
         
         ## compute confidence interval on original scale of parameters
         
-        sel.names <- names( object$param[object$fit.param] )
-        if( !object$aniso$isotropic ) sel.names <- c( 
+        sel.names <- names( object[["param"]][object[["fit.param"]]] )
+        if( !object[["aniso"]][["isotropic"]] ) sel.names <- c( 
           sel.names,
-          names( object$aniso$aniso[object$aniso$fit.aniso] )
+          names( object[["aniso"]][["aniso"]][object[["aniso"]][["fit.aniso"]]] )
         )
         sel.names <- sel.names[sr]
         
-        ff <- c( rep( 1, length( object$param ) + 2 ), rep( 180/pi, 3 ) )
-        names( ff ) <- names( c( object$param, object$aniso$aniso ) )
+        ff <- c( rep( 1, length( object[["param"]] ) + 2 ), rep( 180/pi, 3 ) )
+        names( ff ) <- names( c( object[["param"]], object[["aniso"]][["aniso"]] ) )
         
         ci[sel.names, ] <- t( 
           sapply(
@@ -1045,18 +1052,18 @@ summary.fitted.variogram <-
                 c(-1, 1) * se[x] * qnorm( (1-signif)/2, lower.tail = FALSE ) 
               )
             },
-            param         = c( object$param, object$aniso$aniso ),
+            param         = c( object[["param"]], object[["aniso"]][["aniso"]] ),
             f             = ff,
             se            = se,
-            param.tf      = object$param.tf,
-            trafo.fct     = object$fwd.tf,
-            inv.trafo.fct = object$bwd.tf
+            param.tf      = object[["param.tf"]],
+            trafo.fct     = object[["fwd.tf"]],
+            inv.trafo.fct = object[["bwd.tf"]]
           )
         )
         is.angle <- rownames( ci ) %in% c( "omega", "phi", "zeta" )
         if( sum(is.angle) > 0 ) ci[is.angle, ] <- ci[is.angle, ] * 180/pi
-        ans$param <- cbind( ans$param, ci )
-        if( correlation ) ans$cor.tf.param <- cor.tf.param
+        ans[["param"]] <- cbind( ans[["param"]], ci )
+        if( correlation ) ans[["cor.tf.param"]] <- cor.tf.param
         
       } else {
         warning(
@@ -1086,53 +1093,54 @@ print.summary.fitted.variogram <-
   
   ## 2012-04-13 A. Papritz
   ## 2012-12-18 AP invisible(x)
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   cat("\nCall:")
-  cat( paste( deparse(x$call), sep = "\n", collapse = "\n"),  "\n", sep = "" )
+  cat( paste( deparse(x[["call"]]), sep = "\n", collapse = "\n"),  "\n", sep = "" )
   
-  if( is.na( x$converged ) ){
+  if( is.na( x[["converged"]] ) ){
     cat( "\nEstimation with fixed variogram parameters\n" )
     
   } else {
     
-    if(!(x$converged)) {
+    if(!(x[["converged"]])) {
       cat( 
         "\nAlgorithm did not converge, diagnostic code: ", 
-        x$convergence.code, "\n"
+        x[["convergence.code"]], "\n"
       )
     } else {
       cat(
-        "\nConvergence in", x$iter[1], "function and", 
-        x$iter[2], "Jacobian/gradient evaluations\n"
+        "\nConvergence in", x[["iter"]][1], "function and", 
+        x[["iter"]][2], "Jacobian/gradient evaluations\n"
       )
     }
     
     cat(
       "\nResidual Sum of Squares:", 
-      x$sse, "\n"
+      x[["sse"]], "\n"
     )
     
   }
     
-  resid <- x$residuals
+  resid <- x[["residuals"]]
   cat( "\nResiduals (epsilon):\n")
   nam <- c("Min", "1Q", "Median", "3Q", "Max")
   rq <- structure( quantile(resid), names = nam )
   print( rq, digits = digits, ...)
   
-  cat( "\nVariogram: ", x$variogram.model, "\n" )
-  rownames( x$param ) <- ifelse(
-    x$fit.param,
-    rownames( x$param ),
-    paste( rownames( x$param ), "(fixed)", sep = "" )
+  cat( "\nVariogram: ", x[["variogram.model"]], "\n" )
+  rownames( x[["param"]] ) <- ifelse(
+    x[["fit.param"]],
+    rownames( x[["param"]] ),
+    paste( rownames( x[["param"]] ), "(fixed)", sep = "" )
   )
   printCoefmat(
-    x$param, digits = digits, signif.stars = FALSE, ...
+    x[["param"]], digits = digits, signif.stars = FALSE, ...
   )
   
-  if( !is.null( x$cor.tf.param ) ){
+  if( !is.null( x[["cor.tf.param"]] ) ){
     
-    correl <- x$cor.tf.param
+    correl <- x[["cor.tf.param"]]
     p <- NCOL(correl)
     if( p > 1 ){
       cat("\nCorrelation of (transformed) variogram parameters:\n")
@@ -1166,8 +1174,9 @@ plot.georob <-
   
   ## 2012-12-11 A. Papritz
   ## 2012-12-21 AP correction for using col and pch 
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
-  x$na.action <- NULL
+  x[["na.action"]] <- NULL
   
   estimator <- match.arg( estimator )
   
@@ -1175,7 +1184,7 @@ plot.georob <-
   
   r.sv <- sample.variogram(
     response = residuals( x, level = 0 ), 
-    locations = x$locations.objects$coordinates,
+    locations = x[["locations.objects"]][["coordinates"]],
     lag.class.def = lag.class.def,
     xy.angle.def = xy.angle.def, 
     xz.angle.def = xz.angle.def,
@@ -1195,13 +1204,13 @@ plot.georob <-
   }
   
   if( missing( col ) ){
-    col <- 1:nlevels( r.sv$xy.angle )
-  } else if( length( col ) < nlevels( r.sv$xy.angle ) ) stop(
+    col <- 1:nlevels( r.sv[["xy.angle"]] )
+  } else if( length( col ) < nlevels( r.sv[["xy.angle"]] ) ) stop(
     "number of colors less than number of directions in x-y-plane for which semivariances are computed"
   )
   if( missing( pch ) ){
-    pch <- 1:nlevels( r.sv$xz.angle )
-  } else if( length( pch ) < nlevels( r.sv$xz.angle ) ) stop(
+    pch <- 1:nlevels( r.sv[["xz.angle"]] )
+  } else if( length( pch ) < nlevels( r.sv[["xz.angle"]] ) ) stop(
     "number of colors less than number of directions in x-z-plane for which semivariances are computed"
   )
   
@@ -1211,7 +1220,7 @@ plot.georob <-
   
   lines( 
     x, 
-    to = max( r.sv$lag.dist ),
+    to = max( r.sv[["lag.dist"]] ),
     xy.angle = attr( r.sv, "xy.angle.mid.class" ),
     xz.angle = attr( r.sv, "xz.angle.mid.class" ),
     col = col, pch = pch, lty = lty
@@ -1236,6 +1245,7 @@ lines.georob <- lines.fitted.variogram <-
   ## Function plots the graph of a variogram fitted by f.georob
   
   ## 2012-12-12 A. Papritz
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   ## generate grid of angle classes
   
@@ -1258,7 +1268,7 @@ lines.georob <- lines.fitted.variogram <-
   if( identical( class( x ), "fitted.variogram" ) ){
     ndim <- 3
   } else {
-    ndim <- NCOL( x$locations.objects$coordinates )
+    ndim <- NCOL( x[["locations.objects"]][["coordinates"]] )
   }
   
   ## loop over all angles
@@ -1303,9 +1313,9 @@ lines.georob <- lines.fitted.variogram <-
     },
     angle = angle,
     lag.dist = lag.dist,
-    variogram.model = x$variogram.model,
-    param = x$param,
-    aniso = x$aniso,
+    variogram.model = x[["variogram.model"]],
+    param = x[["param"]],
+    aniso = x[["aniso"]],
     nxy = length( xy.angle ),
     nxz = length( xz.angle ),
     ndim = ndim,

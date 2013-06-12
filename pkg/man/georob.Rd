@@ -1,4 +1,4 @@
-% 2013-05-23 A. Papritz
+% 2013-06-12 A. Papritz
 % R CMD Rdconv -t html -o bla.html georob.Rd ; open bla.html; R CMD Rd2pdf --force georob.Rd; 
 
 \encoding{macintosh}
@@ -430,7 +430,7 @@ plot(r.irf0.aniso, lag.class.def = seq(0, 200, by = 7.5),
     xy.angle.def = c(0, 22.5, 67.5, 112.5, 157.5, 180.), 
     add = TRUE, col = 2:5)
     
-pchisq( 2*(r.irf0.aniso$loglik - r.irf0.iso$loglik), 2, lower = FALSE )}
+pchisq( 2*(r.irf0.aniso[["loglik"]] - r.irf0.iso[["loglik"]]), 2, lower = FALSE )}
 }
 
 \keyword{models}

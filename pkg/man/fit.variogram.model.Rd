@@ -1,4 +1,4 @@
-% 2012-12-12 A. Papritz
+% 2013-06-12 A. Papritz
 % R CMD Rdconv -t html -o bla.html fit.variogram.model.Rd ; open bla.html; R CMD Rd2pdf --force fit.variogram.model.Rd; 
 
 \encoding{macintosh}
@@ -32,7 +32,7 @@ fit.variogram.model(sv,
     aniso = c(f1 = 1, f2 = 1, omega = 90, phi = 90, zeta = 0), 
     fit.aniso = c(f1 = FALSE, f2 = FALSE, omega = FALSE, 
         phi = FALSE, zeta = FALSE),
-    max.lag = max(sv$lag.dist), min.npairs = 30, 
+    max.lag = max(sv[["lag.dist"]]), min.npairs = 30, 
     weighting.method = c("cressie", "equal", "npairs"), hessian = TRUE, 
     verbose = 0, ...)
     
@@ -283,7 +283,7 @@ mechanisms are used in \code{fit.variogram.model}.
 data(wolfcamp, package = "geoR")
 
 ## fitting an isotropic IRF(0) model
-r.sv.iso <- sample.variogram(wolfcamp$data, locations = wolfcamp[[1]], 
+r.sv.iso <- sample.variogram(wolfcamp[["data"]], locations = wolfcamp[[1]], 
     lag.class.def = seq(0, 200, by = 15))
 
 r.irf0.iso <- fit.variogram.model(r.sv.iso, variogram.model = "fractalB",
@@ -297,7 +297,7 @@ plot( r.sv.iso, type = "l")
 lines( r.irf0.iso, line.col = "red")}
 
 ## fitting an anisotropic IRF(0) model
-r.sv.aniso <- sample.variogram(wolfcamp$data,
+r.sv.aniso <- sample.variogram(wolfcamp[["data"]],
     locations = wolfcamp[[1]], lag.class.def = seq(0, 200, by = 15),
     xy.angle.def = c(0., 22.5, 67.5, 112.5, 157.5, 180.))
 \dontrun{

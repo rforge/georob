@@ -74,6 +74,7 @@ lgnpp <-
   ## 2011-12-22 A. Papritz 
   ## 2012-05-07 AP backtransformation of block predictions under permanence 
   ## of lognormality assumption
+  ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   
   ## auxiliary function to backtransform the point predictions and 
   ## optionally the mean squared errors and the prediction intervals
@@ -302,7 +303,7 @@ lgnpp <-
       
       ## get fixed effects design matrix for newdata
       
-      pred.X <- model.matrix( Terms, mf.newdata, contrasts.arg = object$contrasts )
+      pred.X <- model.matrix( Terms, mf.newdata, contrasts.arg = object[["contrasts"]] )
       
       
       #       ## deal with non-NULL offset
@@ -314,8 +315,8 @@ lgnpp <-
       #           offset <- offset + eval( attr( tt, "variables" )[[i + 1]], newdata )
       #         }
       #       }
-      #       if( !is.null( object$call$offset ) ){
-      #         offset <- offset + eval( object$call$offset, newdata )
+      #       if( !is.null( object[["call"]][["offset"]] ) ){
+      #         offset <- offset + eval( object[["call"]][["offset"]], newdata )
       #       }
       
       ## get matrix of coordinates of newdata for point kriging

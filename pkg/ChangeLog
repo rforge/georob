@@ -95,3 +95,8 @@ processing col and pch arguments
 
 * georob.exported.function.R (georob): handling fixed effects model matrices with rank < ncol(x) for non-robust estimation
 * georob.private.function.R (estimate.xihat, prepare.likelihood.calculations, compute.estimating.equations, negative.restr.loglikelihood, gradient.negative.restricted.loglikelihood, georob.fit): handling fixed effects model matrices with rank < ncol(x) for non-robust estimation
+
+
+2013-06-12  Andreas Papritz  <papritz@env.ethz.ch>
+
+* georob.cv.R (all functions): substituting [["x"]] for $x in all lists* georob.exported.functions.R (all functions): substituting [["x"]] for $x in all lists* georob.lgnpp.R (all functions): substituting [["x"]] for $x in all lists* georob.predict.R (all functions): substituting [["x"]] for $x in all lists* georob.private.functions.R (all functions): substituting [["x"]] for $x in all lists* georob.S3methods.R (all functions): substituting [["x"]] for $x in all lists* variogram.R (all functions): substituting [["x"]] for $x in all lists

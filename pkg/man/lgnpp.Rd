@@ -342,10 +342,10 @@ str(r.pred.points$pred@data)
 r.backtf.pred.points <- lgnpp(r.pred.points)
 str(r.backtf.pred.points$pred@data)
 
-spplot(r.backtf.pred.points$pred, zcol = "lgn.pred", main = "Zn content")
+spplot(r.backtf.pred.points[["pred"]], zcol = "lgn.pred", main = "Zn content")
 
 ## predicting mean Zn content for whole area
-r.block <- lgnpp(r.pred.points, is.block = TRUE, all.pred = r.backtf.pred.points$pred)
+r.block <- lgnpp(r.pred.points, is.block = TRUE, all.pred = r.backtf.pred.points[["pred"]])
 r.block
 
 ## block predictions of log(Zn)
