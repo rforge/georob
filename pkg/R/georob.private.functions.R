@@ -1083,6 +1083,7 @@ prepare.likelihood.calculations <-
   ## 2012-11-27 AP changes in check allowed parameter range
   ## 2013-02-04 AP solving estimating equations for xi
   ## 2013-06-12 AP substituting [["x"]] for $x in all lists
+  ## 2013-07-02 AP new transformation of rotation angles
   
   ##  function transforms (1) the variogram parameters back to their
   ##  original scale; computes (2) the correlation matrix, its inverse
@@ -1102,7 +1103,7 @@ prepare.likelihood.calculations <-
   )
   names( param ) <- param.name
   
-  aniso <- c( adjustable.param, fixed.param )[aniso.name]
+  fwd.tf.aniso <- aniso<- c( adjustable.param, fixed.param )[aniso.name]
   
   aniso <- sapply(
     aniso.name,
@@ -1180,12 +1181,12 @@ prepare.likelihood.calculations <-
     
     lik.item[["aniso"]][["aniso"]] <- aniso
     lik.item[["aniso"]][["sincos"]] <- list(
-      co = unname( cos( aniso["omega"] ) ),
-      so = unname( sin( aniso["omega"] ) ),
-      cp = unname( cos( aniso["phi"] ) ),
-      sp = unname( sin( aniso["phi"] ) ),
-      cz = unname( cos( aniso["zeta"] ) ),
-      sz = unname( sin( aniso["zeta"] ) )
+      co = unname( cos( fwd.tf.aniso["omega"] ) ),
+      so = unname( sin( fwd.tf.aniso["omega"] ) ),
+      cp = unname( cos( fwd.tf.aniso["phi"] ) ),
+      sp = unname( sin( fwd.tf.aniso["phi"] ) ),
+      cz = unname( cos( fwd.tf.aniso["zeta"] ) ),
+      sz = unname( sin( fwd.tf.aniso["zeta"] ) )
     )
     
     n <- NCOL( lag.vectors)
@@ -1435,48 +1436,6 @@ dcorr.dparam <-
         ( c( 0., 0., -1. / aniso[["aniso"]]["f2"]^2 )[1:n] * aniso[["sclmat"]] ) * aux^2 
       )
     },
-    
-#     omega = {
-#       drotmat <- with(
-#         aniso[["sincos"]],
-#         rbind(
-#           c(             cp*co,            -cp*so, 0. ),
-#           c(  co*sz*sp + cz*so,  cz*co - sz*sp*so, 0. ),
-#           c( -cz*co*sp + sz*so,  co*sz + cz*sp*so, 0. )
-#         )[ 1:n, 1:n, drop = FALSE ]
-#       )
-#       colSums( 
-#         ( aniso[["sclmat"]] * drotmat %*% t(x) ) * ( aniso[["sclmat"]] * aux ) 
-#       )
-#     },
-#     
-#     phi = {
-#       drotmat <- with(
-#         aniso[["sincos"]],
-#         rbind(
-#           c(    -sp*so,    -co*sp,     cp ),
-#           c(  cp*sz*so,  cp*co*sz,  sz*sp ),
-#           c( -cz*cp*so, -cz*cp*co, -cz*sp )
-#         )[ 1:n, 1:n, drop = FALSE ]
-#       )
-#       colSums( 
-#         ( aniso[["sclmat"]] * drotmat %*% t(x) ) * ( aniso[["sclmat"]] * aux ) 
-#       )
-#     },
-#     
-#     zeta = {
-#       drotmat <- with(
-#         aniso[["sincos"]],
-#         rbind(
-#           c(                0.,               0.,     0. ),
-#           c(  co*sz + cz*sp*so, cz*co*sp - sz*so, -cz*cp ),
-#           c( -cz*co + sz*sp*so, co*sz*sp + cz*so, -cp*sz )
-#         )[ 1:n, 1:n, drop = FALSE ]
-#       )
-#       colSums( 
-#         ( aniso[["sclmat"]] * drotmat %*% t(x) ) * ( aniso[["sclmat"]] * aux ) 
-#       )
-#     },
     omega = {
       drotmat <- with(
         aniso[["sincos"]],
@@ -3260,6 +3219,7 @@ georob.fit <-
   ## 2013-05-06 AP changes for solving estimating equations for xi
   ## 2013-06-12 AP changes in stored items of Valpha object
   ## 2013-06-12 AP substituting [["x"]] for $x in all lists
+  ## 2013-07-03 AP new transformation of rotation angles
   
   ##  ToDos:
   
@@ -3585,10 +3545,6 @@ georob.fit <-
 #   if( !all( aniso.tf %in% c( "log", "identity" ) ) ) stop(
 #     "undefined transformation of anisotropy parameter"
 #   )
-  
-  ##  convert angles to radian
-  
-  aniso[c("omega", "phi", "zeta" )] <- aniso[c("omega", "phi", "zeta" )] / 180 * pi
   
   ##  transform initial anisotropy parameters
   
@@ -4007,6 +3963,37 @@ georob.fit <-
     
     result.list[["cov"]] <- compress( r.cov )
     
+  }
+  
+  ## map angles to halfcircle
+  
+  if( !result.list[["aniso"]][["isotropic"]] ){
+    
+    if( result.list[["aniso"]][["aniso"]]["omega"] < 0. ){
+      result.list[["aniso"]][["aniso"]]["omega"] <- 
+      result.list[["aniso"]][["aniso"]]["omega"] + 180.
+    }
+    if( result.list[["aniso"]][["aniso"]]["omega"] > 180. ){
+      result.list[["aniso"]][["aniso"]]["omega"] <- 
+      result.list[["aniso"]][["aniso"]]["omega"] - 180.
+    }
+    if( result.list[["aniso"]][["aniso"]]["phi"] < 0. ){
+      result.list[["aniso"]][["aniso"]]["phi"] <- 
+      result.list[["aniso"]][["aniso"]]["phi"] + 180.
+    }
+    if( result.list[["aniso"]][["aniso"]]["phi"] > 180. ){
+      result.list[["aniso"]][["aniso"]]["phi"] <- 
+      result.list[["aniso"]][["aniso"]]["phi"] - 180.
+    }
+    if( result.list[["aniso"]][["aniso"]]["zeta"] < 90. ){
+      result.list[["aniso"]][["aniso"]]["zeta"] <- 
+      result.list[["aniso"]][["aniso"]]["zeta"] + 180.
+    }
+    if( result.list[["aniso"]][["aniso"]]["zeta"] > 90. ){
+      result.list[["aniso"]][["aniso"]]["zeta"] <- 
+      result.list[["aniso"]][["aniso"]]["zeta"] - 180.
+    }
+  
   }
   
   ##      result.list[["df.model"]] <- r.df

@@ -117,7 +117,7 @@ georob(formula, data, subset, weights, na.action, model = TRUE,
     \itemize{
     
       \item{\code{f1}: ratio \eqn{f_1} of lengths of second and first
-        second semi-principal axes of an ellipsoidal surface with constant
+        semi-principal axes of an ellipsoidal surface with constant
         semivariance in \eqn{\mathrm{I}\!\mathrm{R}^3}{R^3} (default \code{f1 = 1}).}
       
       \item{\code{f2}: ratio \eqn{f_2} of lengths of third and first

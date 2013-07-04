@@ -77,6 +77,7 @@ georob <-
   ## 2013-05-23 AP correct handling of missing observations and to construct model.frame
   ## 2013-06-03 AP handling design matrices with rank < ncol(x)
   ## 2013-06-12 AP substituting [["x"]] for $x in all lists
+  ## 2013-07-02 AP new transformation of rotation angles
   
   ## check whether input is complete
   
@@ -395,7 +396,7 @@ georob <-
     )
     
     param = t.georob[["param"]][names(fit.param)]
-    aniso = t.georob[["aniso"]][["aniso"]][names(fit.aniso)] * c( 1, 1, rep( 180/pi, 3 ) )
+    aniso = t.georob[["aniso"]][["aniso"]][names(fit.aniso)]
     
   }
   
@@ -644,14 +645,14 @@ param.transf <-
     variance = "log", snugget = "log", nugget = "log", scale = "log", 
     a = "identity", alpha = "identity", beta = "identity", delta = "identity", 
     gamma = "identity", lambda = "identity", n = "identity", nu = "identity",
-    f1 = "log", f2  ="log", omega = "identity", phi = "identity", zeta = "identity"
+    f1 = "log", f2  ="log", omega = "rad", phi = "rad", zeta = "rad"
   )
 {
   
   ## function sets meaningful defaults for transformation of variogram
   ## parameters
   
-  ## 2012-11-27 A. Papritz
+  ## 2013-07-02 A. Papritz
   
   c( 
     variance = variance, snugget = snugget, nugget = nugget, scale = scale,
@@ -671,9 +672,9 @@ fwd.transf <-
   
   ## definition of forward transformation of variogram parameters
   
-  ## 2012-11-27 A. Papritz
+  ## 2013-07-02 A. Papritz
   
-  list( log = function(x) log(x),  identity = function(x) x, ... )
+  list( log = function(x) log(x),  identity = function(x) x, rad = function(x) x/180*pi, ... )
 }
 
 ## ======================================================================
@@ -685,10 +686,15 @@ dfwd.transf<-
   
   ## definition of first derivative of forward transformation of variogram
   ## parameters
+  ## NOTE: dfwd.transf[["rad"]] must be equal to one since sine and cosine 
+  ## are evaluated for transformed angles
   
-  ## 2012-11-27 A. Papritz
+  ## 2013-07-02 A. Papritz
   
-  list( log = function(x) 1/x, identity = function(x) rep(1, length(x)), ... )  
+  list( 
+    log = function(x) 1/x, identity = function(x) rep(1, length(x)), 
+    rad = function(x) rep(1., length(x)), ... 
+  )  
   
 }
 
@@ -701,9 +707,9 @@ bwd.transf <-
   
   ## definition of backward transformation of variogram parameters
   
-  ## 2012-11-27 A. Papritz
+  ## 2013-07-02 A. Papritz
   
-  list( log = function(x) exp(x), identity = function(x) x, ... )
+  list( log = function(x) exp(x), identity = function(x) x, rad = function(x) x/pi*180, ... )
   
 }
 

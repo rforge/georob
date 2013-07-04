@@ -31,7 +31,7 @@ export(
   validate.predictions              # ok
 )
 
-# documented but unexported functions
+# documented but not exported functions
 #
 #   deviance.georob,                # ok
 #   fixed.effects.georob,           # ok

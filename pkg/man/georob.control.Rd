@@ -1,4 +1,4 @@
-% 2013-06-12 A. Papritz
+% 2013-07-02 A. Papritz
 % R CMD Rdconv -t html -o bla.html georob.control.Rd ; open bla.html; R CMD Rd2pdf --force georob.control.Rd; 
 \encoding{macintosh}
 \name{georob.control}
@@ -44,8 +44,8 @@ georob.control(initial.method = c("lmrob", "rq", "lm"), bhat = NULL,
 param.transf(variance = "log", snugget = "log", nugget = "log", scale = "log", 
     a = "identity", alpha = "identity", beta = "identity", delta = "identity", 
     gamma = "identity", lambda = "identity", n = "identity", nu = "identity",
-    f1 = "log", f2  ="log", omega = "identity", phi = "identity",
-    zeta = "identity")
+    f1 = "log", f2  ="log", omega = "rad", phi = "rad",
+    zeta = "rad")
   
 fwd.transf(...)
 
@@ -282,12 +282,13 @@ optim.control(optim.method = c("BFGS", "Nelder-Mead", "CG",
 
   The arguments \code{param.tf}, \code{fwd.tf}, \code{deriv.fwd.tf},
   \code{bwd.tf} define the transformations of the variogram parameters for
-  robust REML estimation.  Implemented are currently \code{"log"} and
-  \code{"identity"} (= no) transformations.  These are the possible values
-  that the many arguments of the function \code{param.transf} accept (as
-  quoted character strings) and these are the names of the list
-  components returned by \code{fwd.transf}, \code{dfwd.transf} and 
-  \code{bwd.transf}.  Additional transformations can be implemented by:
+  robust REML estimation.  Implemented are currently \code{"log"},
+  \code{"rad"} (conversion from degree to radian) and \code{"identity"} (= no)
+  transformations.  These are the possible values that the many arguments
+  of the function \code{param.transf} accept (as quoted character strings)
+  and these are the names of the list components returned by
+  \code{fwd.transf}, \code{dfwd.transf} and \code{bwd.transf}.  Additional
+  transformations can be implemented by:
   
   \enumerate{
   

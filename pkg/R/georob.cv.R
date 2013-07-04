@@ -12,6 +12,8 @@ cv.georob <-
     duplicates.in.same.set = TRUE,
     re.estimate = TRUE, param = object[["param"]], 
     fit.param = object[["initial.objects"]][["fit.param"]],
+    aniso = object[["aniso"]][["aniso"]], 
+    fit.aniso = object[["initial.objects"]][["fit.aniso"]],
     return.fit = FALSE, reduced.output = TRUE,
     lgn = FALSE,
     ncores = min( nset, detectCores() ),
@@ -74,12 +76,14 @@ cv.georob <-
   ## 2013-05-23 AP correct handling of missing observations
   ## 2013-05-24 AP separate initial variogram parameters for each cross-validation set
   ## 2013-06-12 AP substituting [["x"]] for $x in all lists
+  ## 2013-07-02 AP passing initial values of aniso and fit.aniso to georob via update
     
   ## auxiliary function that fits the model and computes the predictions of
   ## a cross-validation set
   
   f.aux <- function( 
-    ..i.., object, formula, data, sets, re.estimate, param, fit.param, lgn, verbose, ...
+    ..i.., object, formula, data, sets, re.estimate, 
+    param, fit.param, aniso, fit.aniso, lgn, verbose, ...
   ){  ## cv function
     
     if (verbose) cat( "\n\n  processing cross-validation set", ..i.., "\n" ) 
@@ -93,6 +97,7 @@ cv.georob <-
         gamma = FALSE, lambda = FALSE, n = FALSE, nu = FALSE,
         f1 = FALSE, f2  =FALSE, omega = FALSE, phi = FALSE, zeta = FALSE      
       )[names( param )]
+      fit.aniso <- c( f1 = FALSE, f2 = FALSE, omega = FALSE, phi = FALSE, zeta = FALSE )
     }
     
     ## change environment of terms and formula so that subset selection works for update            
@@ -104,14 +109,16 @@ cv.georob <-
     
     if( ( is.matrix( param ) || is.data.frame( param ) ) )  param <- param[..i..,]
     if( ( is.matrix( fit.param ) || is.data.frame( fit.param ) ) )  fit.param <- fit.param[..i..,]
+    if( ( is.matrix( aniso ) || is.data.frame( param ) ) )  aniso <- aniso[..i..,]
+    if( ( is.matrix( fit.aniso ) || is.data.frame( fit.aniso ) ) )  fit.aniso <- fit.aniso[..i..,]
 
     t.georob <- update( 
       object, 
       formula = formula,
       data = data,
       subset = -sets[[..i..]] ,
-      param = param,
-      fit.param = fit.param,
+      param = param, fit.param = fit.param,
+      aniso = aniso, fit.aniso = fit.aniso,
       verbose = verbose,
       ...
     )
@@ -242,11 +249,19 @@ cv.georob <-
   ## check dimension of param and fit.param
   
   if( ( is.matrix( param ) || is.data.frame( param ) ) && nrow( param )!= nset ) stop(
-    "param must have 'nset' rows if it is a matrix or data frame"  
+    "'param' must have 'nset' rows if it is a matrix or data frame"  
   )
     
   if( ( is.matrix( fit.param ) || is.data.frame( fit.param ) ) && nrow( param )!= nset ) stop(
-    "fit.param must have 'nset' rows if it is a matrix or data frame"  
+    "'fit.param' must have 'nset' rows if it is a matrix or data frame"  
+  )
+    
+  if( ( is.matrix( aniso ) || is.data.frame( aniso ) ) && nrow( aniso )!= nset ) stop(
+    "'aniso' must have 'nset' rows if it is a matrix or data frame"  
+  )
+    
+  if( ( is.matrix( fit.aniso ) || is.data.frame( fit.aniso ) ) && nrow( aniso )!= nset ) stop(
+    "'fit.aniso' must have 'nset' rows if it is a matrix or data frame"  
   )
     
   ## loop over all cross-validation sets
@@ -270,8 +285,8 @@ cv.georob <-
       data = data,
       sets = sets,
       re.estimate = re.estimate,
-      param = param,
-      fit.param = fit.param,
+      param = param, fit.param = fit.param,
+      aniso = aniso, fit.aniso = fit.aniso,
       lgn = lgn,
       verbose = verbose,
       ...
@@ -291,8 +306,8 @@ cv.georob <-
       data = data,
       sets = sets,
       re.estimate = re.estimate,
-      param = param,
-      fit.param = fit.param,
+      param = param, fit.param = fit.param,
+      aniso = aniso, fit.aniso = fit.aniso,
       lgn = lgn,
       verbose = verbose,
       mc.cores = ncores,
