@@ -77,6 +77,7 @@ cv.georob <-
   ## 2013-05-24 AP separate initial variogram parameters for each cross-validation set
   ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   ## 2013-07-02 AP passing initial values of aniso and fit.aniso to georob via update
+  ## 2013-07-05 AP return "variogram.model" as part of fit componnent
     
   ## auxiliary function that fits the model and computes the predictions of
   ## a cross-validation set
@@ -165,7 +166,7 @@ cv.georob <-
       
       t.georob <- t.georob[c(  
         "tuning.psi", "converged", "convergence.code",
-        "gradient", "param", "aniso",
+        "gradient", "variogram.model", "param", "aniso",
         "coefficients"
       )]
       

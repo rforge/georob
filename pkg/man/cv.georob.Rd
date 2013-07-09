@@ -1,4 +1,4 @@
-% 2013-07-02 A. Papritz
+% 2013-07-05 A. Papritz
 % R CMD Rdconv -t html -o bla.html cv.georob.Rd ; open bla.html; R CMD Rd2pdf --force cv.georob.Rd; 
 
 \encoding{macintosh}
@@ -180,8 +180,8 @@
   \code{georob}, fitted for the \eqn{K} reduced data set
   (\code{reduced.output = FALSE}), or \eqn{K} lists with the components
   \code{tuning.psi}, \code{converged}, \cr \code{convergence.code},
-  \code{gradient}, \code{param}, \code{aniso$aniso}, \code{coefficients}
-  along with the standard errors of
+  \code{gradient}, \code{variogram.model}, \code{param},
+  \code{aniso$aniso}, \code{coefficients} along with the standard errors of
   \eqn{\widehat{\mbox{\boldmath$\beta$\unboldmath}}}{hat\beta}, see
   \code{\link{georobObject}}.
  

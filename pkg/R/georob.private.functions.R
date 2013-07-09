@@ -1480,7 +1480,7 @@ dcorr.dparam <-
     
     NA
   ) / ( hs * alpha^2 )
-  
+    
   ##  partial derivative of scaled lag distance with respect to scale
   ##  parameter
   
@@ -3220,6 +3220,8 @@ georob.fit <-
   ## 2013-06-12 AP changes in stored items of Valpha object
   ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   ## 2013-07-03 AP new transformation of rotation angles
+  ## 2013-07-09 AP catching errors occuring when fitting anisotropic
+  ##               variograms with default anisotropy parameters
   
   ##  ToDos:
   
@@ -3527,7 +3529,17 @@ georob.fit <-
   if( aniso["zeta"] < -90. ||  aniso["zeta"] > 90. ) stop(
     "initial value of parameter 'zeta' must be in [-90, 90]" 
   )
-
+  
+  ## adjust default initial values of anisotropy parameters if these are
+  ## fitted
+  
+  if( fit.aniso["omega"] && aniso["f1"] == 1. ) aniso["f1"] <- aniso["f1"] - sqrt( .Machine$double.eps )
+  if( fit.aniso["phi"] ){
+    if( aniso["f1"] == 1. ) aniso["f1"] <- aniso["f1"] - sqrt( .Machine$double.eps )
+    if( aniso["f2"] == 1. ) aniso["f2"] <- aniso["f2"] - sqrt( .Machine$double.eps )
+  }
+  if( fit.aniso["zeta"] && aniso["f2"] == 1. ) aniso["f2"] <- aniso["f2"] - sqrt( .Machine$double.eps )
+  
   ##  rearrange and check flags controlling anisotropy parameter fitting 
   
   fit.aniso <- fit.aniso[aniso.name]

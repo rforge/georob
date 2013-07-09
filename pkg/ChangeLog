@@ -108,3 +108,13 @@ processing col and pch arguments
 * georob.private.functions.R (georob.fit, prepare.likelihood.calculations): new transformation of rotation angles
 * georob.S3methods.R (print.georob, summary.georob): new transformation of rotation angles
 * georob.cv.R (cv.georob): passing initial values of aniso and fit.aniso to georob via update
+
+
+2013-07-05  Andreas Papritz  <papritz@env.ethz.ch>
+
+* georob.cv.R (cv.georob): return "variogram.model" as part of 'fit' component
+
+
+2013-07-09  Andreas Papritz  <papritz@env.ethz.ch>
+
+* georob.private.functions.R (georob.fit): catching errors occuring when fitting anisotropic variogram models with default anisotropy parameters
