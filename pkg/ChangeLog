@@ -118,3 +118,10 @@ processing col and pch arguments
 2013-07-09  Andreas Papritz  <papritz@env.ethz.ch>
 
 * georob.private.functions.R (georob.fit): catching errors occuring when fitting anisotropic variogram models with default anisotropy parameters
+
+
+2013-07-10  Andreas Papritz  <papritz@env.ethz.ch>
+
+* georob.exported.functions.R (georob): computing robust initial variogram parameter estimates by minimizing sum of squared estimating equations
+* georob.private.functions.R (georob.fit, compute.estimating.equations): computing robust initial variogram parameter estimates by minimizing sum of squared estimating equations
+

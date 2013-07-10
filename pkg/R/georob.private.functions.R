@@ -2348,6 +2348,7 @@ dcorr.dparam <-
 compute.estimating.equations <- 
   function(
     adjustable.param,
+    slv,
     envir,
     variogram.model, fixed.param, param.name, aniso.name,
     param.tf, bwd.tf, safe.param,
@@ -2589,7 +2590,19 @@ compute.estimating.equations <-
     
     assign( "lik.item", lik.item, pos = as.environment( envir ) )
     
-    return( eeq.emp / eeq.exp - 1. )
+    if( slv ){
+      return( eeq.emp / eeq.exp - 1. )
+    } else {
+      res <- sum( (eeq.emp / eeq.exp - 1.)^2 )
+      if( verbose > 1 ) cat( 
+        "  sum(EEQ^2)         :",
+        format( 
+          signif( res, digits = 7 ), 
+          scientific = TRUE, width = 14
+        ), "\n", sep = "" 
+      )
+      return( res )
+    }
     
   } else {
     
@@ -3155,6 +3168,7 @@ gradient.negative.restricted.loglikelihood <-
 
 georob.fit <- 
   function(
+    slv,
     envir,
     initial.objects,
     variogram.model, param, fit.param,
@@ -3535,10 +3549,10 @@ georob.fit <-
   
   if( fit.aniso["omega"] && aniso["f1"] == 1. ) aniso["f1"] <- aniso["f1"] - sqrt( .Machine$double.eps )
   if( fit.aniso["phi"] ){
-    if( aniso["f1"] == 1. ) aniso["f1"] <- aniso["f1"] - sqrt( .Machine$double.eps )
-    if( aniso["f2"] == 1. ) aniso["f2"] <- aniso["f2"] - sqrt( .Machine$double.eps )
+    if( aniso["f1"] == 1. ) aniso["f1"] <- aniso["f1"] - 0.0001
+    if( aniso["f2"] == 1. ) aniso["f2"] <- aniso["f2"] - 0.0001
   }
-  if( fit.aniso["zeta"] && aniso["f2"] == 1. ) aniso["f2"] <- aniso["f2"] - sqrt( .Machine$double.eps )
+  if( fit.aniso["zeta"] && aniso["f2"] == 1. ) aniso["f2"] <- aniso["f2"] - 0.0001
   
   ##  rearrange and check flags controlling anisotropy parameter fitting 
   
@@ -3607,7 +3621,7 @@ georob.fit <-
   if( !identical( t.exp[["message"]], "OK" ) ) stop( t.exp[["message"]] )
   expectations["dpsi"] <- t.exp[["value"]]
   if( verbose > 1 ) cat( 
-    "\nexpectation of psi'(epsilon/sigma)                             :", 
+    "\nexpectation of psi'(epsilon/sigma)                    :", 
     signif( expectations["dpsi"] ), "\n" 
   )
   
@@ -3624,81 +3638,181 @@ georob.fit <-
   if( !identical( t.exp[["message"]], "OK" ) ) stop( t.exp[["message"]] )
   expectations["psi2"] <- t.exp[["value"]]
   if( verbose > 1 ) cat( 
-    "expectation of (psi(epsilon/sigma))^2                          :", 
+    "expectation of (psi(epsilon/sigma))^2                 :", 
     signif( t.exp[["value"]] ), "\n" 
   )
-  
-  
   
   r.hessian <- NULL
   
   if( tuning.psi < tuning.psi.nr ) {
     
+    ## robust REML estimation
+    
     if( any( c( fit.param, fit.aniso ) ) ){
       
-      ##  some variogram parameters are fitted
+      ##  find roots of estimating equations
       
-      ##  find root of estimating equations
+      if( slv ){
       
-      r.root <- nleqslv(
-        x = c( 
-          transformed.param[ fit.param ], 
-          transformed.aniso[ fit.aniso ] 
-        ),
-        fn = compute.estimating.equations,
-        method = nleqslv.method,
-        control = nleqslv.control,
-        envir = envir,        
-        variogram.model = variogram.model,
-        fixed.param = c( 
-          transformed.param[ !fit.param ], 
-          transformed.aniso[ !fit.aniso ]
-        ),
-        param.name = param.name, 
-        aniso.name = aniso.name,
-        param.tf = param.tf,
-        bwd.tf = bwd.tf,
-        safe.param = safe.param,
-        lag.vectors = lag.vectors,
-        XX = XX, min.condnum = min.condnum, rankdef.x = rankdef.x,
-        yy = yy, betahat = betahat, TT = TT, bhat = bhat, 
-        psi.function = rho.psi.etc[["psi.function"]], 
-        dpsi.function = rho.psi.etc[["dpsi.function"]], 
-        tuning.psi = tuning.psi,
-        tuning.psi.nr = tuning.psi.nr,
-        irwls.initial = irwls.initial,
-        irwls.maxiter = irwls.maxiter,
-        irwls.reltol = irwls.reltol,
-        force.gradient = force.gradient,
-        expectations = expectations,
-        verbose = verbose
-      ) 
-      
-      #       r.param <- r.root[["x"]]
-      #       names( r.param ) <- names( transformed.param[ fit.param ] )
-      
-      r.gradient <- r.root[["fvec"]]
-      names( r.gradient ) <- c(
-        names( transformed.param[ fit.param ] ),
-        names( transformed.aniso[ fit.aniso ] )
-      )
-      
-      r.converged <- r.root[["termcd"]] == 1
-      r.convergence.code <- r.root[["termcd"]] 
-      
-      r.counts <- c( nfcnt = r.root[["nfcnt"]], njcnt = r.root[["njcnt"]] )
+        r.root <- nleqslv(
+          x = c( 
+            transformed.param[ fit.param ], 
+            transformed.aniso[ fit.aniso ] 
+          ),
+          fn = compute.estimating.equations,
+          method = nleqslv.method,
+          control = nleqslv.control,
+          slv = slv,
+          envir = envir,        
+          variogram.model = variogram.model,
+          fixed.param = c( 
+            transformed.param[ !fit.param ], 
+            transformed.aniso[ !fit.aniso ]
+          ),
+          param.name = param.name, 
+          aniso.name = aniso.name,
+          param.tf = param.tf,
+          bwd.tf = bwd.tf,
+          safe.param = safe.param,
+          lag.vectors = lag.vectors,
+          XX = XX, min.condnum = min.condnum, rankdef.x = rankdef.x,
+          yy = yy, betahat = betahat, TT = TT, bhat = bhat, 
+          psi.function = rho.psi.etc[["psi.function"]], 
+          dpsi.function = rho.psi.etc[["dpsi.function"]], 
+          tuning.psi = tuning.psi,
+          tuning.psi.nr = tuning.psi.nr,
+          irwls.initial = irwls.initial,
+          irwls.maxiter = irwls.maxiter,
+          irwls.reltol = irwls.reltol,
+          force.gradient = force.gradient,
+          expectations = expectations,
+          verbose = verbose
+        ) 
+        
+        #       r.param <- r.root[["x"]] names( r.param ) <- names(
+        #       transformed.param[ fit.param ] )
+        
+        r.gradient <- r.root[["fvec"]]
+        names( r.gradient ) <- c(
+          names( transformed.param[ fit.param ] ),
+          names( transformed.aniso[ fit.aniso ] )
+        )
+        
+        r.converged <- r.root[["termcd"]] == 1
+        r.convergence.code <- r.root[["termcd"]] 
+        
+        r.counts <- c( nfcnt = r.root[["nfcnt"]], njcnt = r.root[["njcnt"]] )
+        
+      } else {
+        
+        ## minimize sum of squared estimating equations
+        
+        r.opt.eeq.sq <- optim(
+          par = c( 
+            transformed.param[ fit.param ], 
+            transformed.aniso[ fit.aniso ] 
+          ),
+          fn = compute.estimating.equations,
+          #         gr = gradient.negative.restricted.loglikelihood,
+          method = optim.method, 
+          lower = optim.lower,
+          upper = optim.upper,
+          control = optim.control,
+          hessian = FALSE,
+          slv = slv,
+          envir = envir,        
+          variogram.model = variogram.model,
+          fixed.param = c( 
+            transformed.param[ !fit.param ], 
+            transformed.aniso[ !fit.aniso ]
+          ),
+          param.name = param.name, 
+          aniso.name = aniso.name,
+          param.tf = param.tf,
+          bwd.tf = bwd.tf,
+          safe.param = safe.param,
+          lag.vectors = lag.vectors,
+          XX = XX, min.condnum = min.condnum, rankdef.x = rankdef.x,
+          yy = yy, betahat = betahat, TT = TT, bhat = bhat, 
+          psi.function = rho.psi.etc[["psi.function"]], 
+          dpsi.function = rho.psi.etc[["dpsi.function"]], 
+          tuning.psi = tuning.psi,
+          tuning.psi.nr = tuning.psi.nr,
+          irwls.initial = irwls.initial,
+          irwls.maxiter = irwls.maxiter,
+          irwls.reltol = irwls.reltol,
+          force.gradient = force.gradient,
+          expectations = expectations,
+          verbose = verbose
+        )
+        
+        r.opt.neg.loglik <- r.opt.eeq.sq[["value"]]     
+        r.converged <- r.opt.eeq.sq[["convergence"]] == 0
+        r.convergence.code <- r.opt.eeq.sq[["convergence"]]      
+        r.counts <- r.opt.eeq.sq[["counts"]]
+        
+        if( verbose > 0 ){
+          cat( 
+            "\n  sum(EEQ^2)         :",
+            format( 
+              signif( r.opt.eeq.sq[["value"]], digits = 7 ), 
+              scientific = TRUE, width = 14
+            ), sep = "" 
+          )
+          cat( 
+            "\n  convergence code   :", 
+            format( 
+              signif( r.opt.eeq.sq[["convergence"]], digits = 0 ), 
+              scientific = FALSE, width = 14
+            ), "\n\n", sep = "" 
+          )
+        }
+               
+        #         if( hessian ) r.hessian <- r.opt.eeq.sq[["hessian"]]
+        
+        r.gradient <- compute.estimating.equations(
+          adjustable.param = r.opt.eeq.sq[["par"]],
+          slv = TRUE,
+          envir = envir,        
+          variogram.model = variogram.model,
+          fixed.param = c( 
+            transformed.param[ !fit.param ], 
+            transformed.aniso[ !fit.aniso ]
+          ),
+          param.name = param.name, 
+          aniso.name = aniso.name,
+          param.tf = param.tf,
+          bwd.tf = bwd.tf,
+          safe.param = safe.param,
+          lag.vectors = lag.vectors,
+          XX = XX, min.condnum = min.condnum, rankdef.x = rankdef.x,
+          yy = yy, betahat = betahat, TT = TT, bhat = bhat, 
+          psi.function = rho.psi.etc[["psi.function"]], 
+          dpsi.function = rho.psi.etc[["dpsi.function"]], 
+          tuning.psi = tuning.psi,
+          tuning.psi.nr = tuning.psi.nr,
+          irwls.initial = irwls.initial,
+          irwls.maxiter = irwls.maxiter,
+          irwls.reltol = irwls.reltol,
+          force.gradient = force.gradient,
+          expectations = expectations,
+          verbose = verbose
+        )
+
+      }
       
     } else {
       
       ##  all variogram parameters are fixed
       
-      ##  compute values of estimating equations
+      ##  evaluate estimating equations
       
       r.gradient <- compute.estimating.equations(
         adjustable.param = c( 
           transformed.param[ fit.param ], 
           transformed.aniso[ fit.aniso ] 
         ),
+        slv = TRUE,
         envir = envir,        
         variogram.model = variogram.model,
         fixed.param = c( 
@@ -3737,8 +3851,7 @@ georob.fit <-
     
     if( any( fit.param ) ){
       
-      ##  some variogram parameters are fitted
-      ##  minimize laplace approximation of negative restricted loglikelihood
+      ##  Gaussian REML estimation
       
       r.opt.neg.restricted.loglik <- optim(
         par = c( 
@@ -3785,7 +3898,6 @@ georob.fit <-
       r.counts <- r.opt.neg.restricted.loglik[["counts"]]
       
       if( hessian ) r.hessian <- r.opt.neg.restricted.loglik[["hessian"]]
-      
       
       r.gradient <- gradient.negative.restricted.loglikelihood(
         adjustable.param = r.opt.neg.restricted.loglik[["par"]],

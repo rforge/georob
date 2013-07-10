@@ -18,7 +18,7 @@ georob <-
     )[ names(param) ],
     aniso = c( f1 = 1., f2 = 1., omega = 90., phi = 90., zeta = 0. ),
     fit.aniso = c( f1 = FALSE, f2 = FALSE, omega = FALSE, phi = FALSE, zeta = FALSE ),
-    tuning.psi = 2, initial.param  = TRUE,
+    tuning.psi = 2, initial.param  = c( "minimize", "exclude", "no" ),
     control = georob.control( ... ), verbose = 0,
     ...
   )
@@ -188,7 +188,7 @@ georob <-
       signif( condnum, 2 ), ")\ninitial values of fixed effects coefficients are computed by 'lm'\n\n"
     )
     control[["initial.method"]] <- "lm"
-    initial.param <- FALSE
+    initial.param <- "mininimize"
     warning( 
       "design matrix has not full column rank (condition number of X^T X: ", 
       signif( condnum, 2 ), ")\ninitial values of fixed effects coefficients are computed by 'lm'"
@@ -202,7 +202,7 @@ georob <-
   
   ## adjust choice for initial.method to compute regression coefficients
   
-  if( initial.param ) control[["initial.method"]] <- "lmrob"
+  if( identical( initial.param, "exclude" ) ) control[["initial.method"]] <- "lmrob"
   
   ## compute initial guess of fixed effects parameters (betahat)
   
@@ -318,85 +318,161 @@ georob <-
   ## prune data set for computing initial values of variogram and
   ## anisotropy parameters by reml
   
-  if( initial.param && tuning.psi < control[["tuning.psi.nr"]] ){
-    
-    t.sel <- switch(
-      control[["initial.method"]],
-      lmrob = r.initial.fit[["rweights"]] > control[["min.rweight"]],
-      stop(
-        "computing initial values of covariance parameters requires 'lmrob' as ",
-        "method for computing initial regression coefficients"
+  initial.param <- match.arg( initial.param )
+  
+  if( tuning.psi < control[["tuning.psi.nr"]] ){
+        
+    if( identical( initial.param, "exclude" ) ){
+      
+      if( verbose > 0 ) cat( "\ncomputing robust initial parameter estimates ...\n" )
+      
+      t.sel <- switch(
+        control[["initial.method"]],
+        lmrob = r.initial.fit[["rweights"]] > control[["min.rweight"]],
+        stop(
+          "computing initial values of covariance parameters requires 'lmrob' as ",
+          "method for computing initial regression coefficients"
+        )
       )
-    )
-    
-    if( verbose > 0 ) cat( 
-      "\ndiscarding", sum( !t.sel ), "of", length( t.sel ), 
-      "observations for computing initial estimates of variogram\nand anisotropy parameter by gaussian reml\n"
-    )
-    
-    ## collect.items for initial object
-    
-    initial.objects <- list(
-      x = as.matrix( x[t.sel, ] ),
-      y = yy[t.sel],
-      betahat = coef( r.initial.fit ),
-      bhat = if( is.null( control[["bhat"]] ) ){
-        rep( 0., length( yy ) )[t.sel]
-      } else {
-        control[["bhat"]][t.sel]
-      },
-      initial.fit = r.initial.fit,
-      locations.objects = list(
-        locations = locations,
-        coordinates = locations.coords[t.sel, ]
-      ),
-      isotropic = aniso.missing
-    )
-    
-    ## estimate model parameters with pruned data set
-    
-    t.georob <- georob.fit(
-      envir = envir,
-      initial.objects = initial.objects,
-      variogram.model = variogram.model, param = param, fit.param = fit.param,
-      aniso = aniso, fit.aniso = fit.aniso,
-      param.tf = control[["param.tf"]],
-      fwd.tf = control[["fwd.tf"]], 
-      deriv.fwd.tf = control[["deriv.fwd.tf"]],
-      bwd.tf = control[["bwd.tf"]], 
-      safe.param = control[["safe.param"]],
-      tuning.psi = control[["tuning.psi.nr"]],
-      cov.bhat = control[["cov.bhat"]], full.cov.bhat = control[["full.cov.bhat"]],
-      cov.betahat = control[["cov.betahat"]], 
-      cov.bhat.betahat = control[["cov.bhat.betahat"]],
-      cov.delta.bhat = control[["cov.delta.bhat"]],
-      full.cov.delta.bhat = control[["full.cov.delta.bhat"]],
-      cov.delta.bhat.betahat = control[["cov.delta.bhat.betahat"]],
-      cov.ehat = control[["cov.ehat"]], full.cov.ehat = control[["full.cov.ehat"]],
-      cov.ehat.p.bhat = control[["cov.ehat.p.bhat"]], full.cov.ehat.p.bhat = control[["full.cov.ehat.p.bhat"]],
-      aux.cov.pred.target = control[["aux.cov.pred.target"]],
-      min.condnum = control[["min.condnum"]],
-      rankdef.x = rankdef.x,
-      psi.func = control[["psi.func"]],
-      tuning.psi.nr = control[["tuning.psi.nr"]],
-      irwls.initial = control[["irwls.initial"]],
-      irwls.maxiter = control[["irwls.maxiter"]],
-      irwls.reltol = control[["irwls.reltol"]],
-      force.gradient = control[["force.gradient"]],
-      zero.dist = control[["zero.dist"]],
-      nleqslv.method =  control[["nleqslv"]][["method"]],
-      nleqslv.control = control[["nleqslv"]][["control"]],
-      optim.method =  control[["optim"]][["method"]],
-      optim.lower = control[["optim"]][["lower"]],
-      optim.upper = control[["optim"]][["upper"]],
-      hessian =       control[["optim"]][["hessian"]],
-      optim.control = control[["optim"]][["control"]],
-      full.output = control[["full.output"]],
-      verbose = verbose
-    )
-    
-    param = t.georob[["param"]][names(fit.param)]
-    aniso = t.georob[["aniso"]][["aniso"]][names(fit.aniso)]
+      
+      if( verbose > 0 ) cat( 
+        "\ndiscarding", sum( !t.sel ), "of", length( t.sel ), 
+        "observations for computing initial estimates of variogram\nand anisotropy parameter by gaussian reml\n"
+      )
+      
+      ## collect.items for initial object
+      
+      initial.objects <- list(
+        x = as.matrix( x[t.sel, ] ),
+        y = yy[t.sel],
+        betahat = coef( r.initial.fit ),
+        bhat = if( is.null( control[["bhat"]] ) ){
+          rep( 0., length( yy ) )[t.sel]
+        } else {
+          control[["bhat"]][t.sel]
+        },
+        initial.fit = r.initial.fit,
+        locations.objects = list(
+          locations = locations,
+          coordinates = locations.coords[t.sel, ]
+        ),
+        isotropic = aniso.missing
+      )
+      
+      ## estimate model parameters with pruned data set
+      
+      t.georob <- georob.fit(
+        slv = TRUE,
+        envir = envir,
+        initial.objects = initial.objects,
+        variogram.model = variogram.model, param = param, fit.param = fit.param,
+        aniso = aniso, fit.aniso = fit.aniso,
+        param.tf = control[["param.tf"]],
+        fwd.tf = control[["fwd.tf"]], 
+        deriv.fwd.tf = control[["deriv.fwd.tf"]],
+        bwd.tf = control[["bwd.tf"]], 
+        safe.param = control[["safe.param"]],
+        tuning.psi = control[["tuning.psi.nr"]],
+        cov.bhat = control[["cov.bhat"]], full.cov.bhat = control[["full.cov.bhat"]],
+        cov.betahat = control[["cov.betahat"]], 
+        cov.bhat.betahat = control[["cov.bhat.betahat"]],
+        cov.delta.bhat = control[["cov.delta.bhat"]],
+        full.cov.delta.bhat = control[["full.cov.delta.bhat"]],
+        cov.delta.bhat.betahat = control[["cov.delta.bhat.betahat"]],
+        cov.ehat = control[["cov.ehat"]], full.cov.ehat = control[["full.cov.ehat"]],
+        cov.ehat.p.bhat = control[["cov.ehat.p.bhat"]], full.cov.ehat.p.bhat = control[["full.cov.ehat.p.bhat"]],
+        aux.cov.pred.target = control[["aux.cov.pred.target"]],
+        min.condnum = control[["min.condnum"]],
+        rankdef.x = rankdef.x,
+        psi.func = control[["psi.func"]],
+        tuning.psi.nr = tuning.psi,
+        irwls.initial = control[["irwls.initial"]],
+        irwls.maxiter = control[["irwls.maxiter"]],
+        irwls.reltol = control[["irwls.reltol"]],
+        force.gradient = control[["force.gradient"]],
+        zero.dist = control[["zero.dist"]],
+        nleqslv.method =  control[["nleqslv"]][["method"]],
+        nleqslv.control = control[["nleqslv"]][["control"]],
+        optim.method =  control[["optim"]][["method"]],
+        optim.lower = control[["optim"]][["lower"]],
+        optim.upper = control[["optim"]][["upper"]],
+        hessian =       control[["optim"]][["hessian"]],
+        optim.control = control[["optim"]][["control"]],
+        full.output = control[["full.output"]],
+        verbose = verbose
+      )
+      
+      param = t.georob[["param"]][names(fit.param)]
+      aniso = t.georob[["aniso"]][["aniso"]][names(fit.aniso)]
+      
+    } else if( identical( initial.param, "minimize" ) ){
+      
+      if( verbose > 0 ) cat( "\ncomputing robust initial parameter estimates ...\n" )
+      
+      initial.objects <- list(
+        x = as.matrix( x ),
+        y = yy,
+        betahat = coef( r.initial.fit ),
+        bhat = if( is.null( control[["bhat"]] ) ){
+          rep( 0., length( yy ) )
+        } else {
+          control[["bhat"]]
+        },
+        initial.fit = r.initial.fit,
+        locations.objects = list(
+          locations = locations,
+          coordinates = locations.coords
+        ),
+        isotropic = aniso.missing
+      )
+      
+      ## estimate model parameters by minimizing sum( gradient^2)
+      
+      t.georob <- georob.fit(
+        slv = FALSE,
+        envir = envir,
+        initial.objects = initial.objects,
+        variogram.model = variogram.model, param = param, fit.param = fit.param,
+        aniso = aniso, fit.aniso = fit.aniso,
+        param.tf = control[["param.tf"]],
+        fwd.tf = control[["fwd.tf"]], 
+        deriv.fwd.tf = control[["deriv.fwd.tf"]],
+        bwd.tf = control[["bwd.tf"]], 
+        safe.param = control[["safe.param"]],
+        tuning.psi = tuning.psi,
+        cov.bhat = control[["cov.bhat"]], full.cov.bhat = control[["full.cov.bhat"]],
+        cov.betahat = control[["cov.betahat"]], 
+        cov.bhat.betahat = control[["cov.bhat.betahat"]],
+        cov.delta.bhat = control[["cov.delta.bhat"]],
+        full.cov.delta.bhat = control[["full.cov.delta.bhat"]],
+        cov.delta.bhat.betahat = control[["cov.delta.bhat.betahat"]],
+        cov.ehat = control[["cov.ehat"]], full.cov.ehat = control[["full.cov.ehat"]],
+        cov.ehat.p.bhat = control[["cov.ehat.p.bhat"]], full.cov.ehat.p.bhat = control[["full.cov.ehat.p.bhat"]],
+        aux.cov.pred.target = control[["aux.cov.pred.target"]],
+        min.condnum = control[["min.condnum"]],
+        rankdef.x = rankdef.x,
+        psi.func = control[["psi.func"]],
+        tuning.psi.nr = control[["tuning.psi.nr"]],
+        irwls.initial = control[["irwls.initial"]],
+        irwls.maxiter = control[["irwls.maxiter"]],
+        irwls.reltol = control[["irwls.reltol"]],
+        force.gradient = control[["force.gradient"]],
+        zero.dist = control[["zero.dist"]],
+        nleqslv.method =  control[["nleqslv"]][["method"]],
+        nleqslv.control = control[["nleqslv"]][["control"]],
+        optim.method =  control[["optim"]][["method"]],
+        optim.lower = control[["optim"]][["lower"]],
+        optim.upper = control[["optim"]][["upper"]],
+        hessian =       control[["optim"]][["hessian"]],
+        optim.control = control[["optim"]][["control"]],
+        full.output = control[["full.output"]],
+        verbose = verbose
+      )
+      
+      param = t.georob[["param"]][names(fit.param)]
+      aniso = t.georob[["aniso"]][["aniso"]][names(fit.aniso)]
+      
+    }
     
   }
   
@@ -420,8 +496,11 @@ georob <-
   )
   
   ## estimate model parameters
-  
+
+  if( verbose > 0 ) cat( "computing final parameter estimates ...\n" )
+
   r.georob <- georob.fit(
+    slv = TRUE,
     envir = envir,
     initial.objects = initial.objects,
     variogram.model = variogram.model, param = param, fit.param = fit.param,

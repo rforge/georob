@@ -1,4 +1,4 @@
-% 2013-07-05 A. Papritz
+% 2013-07-10 A. Papritz
 % R CMD Rdconv -t html -o bla.html cv.georob.Rd ; open bla.html; R CMD Rd2pdf --force cv.georob.Rd; 
 
 \encoding{macintosh}
@@ -105,7 +105,7 @@
   
   \item{return.fit}{logical controlling whether information about the fit
   should be returned for when re-estimating the model with the reduced data
-  sets (default \code{TRUE}).}
+  sets (default \code{FALSE}).}
   
   \item{reduced.output}{logical controlling whether the complete fitted
   model objects, fitted to the reduced data sets, are returned
