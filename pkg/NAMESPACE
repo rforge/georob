@@ -1,5 +1,6 @@
 import( stats, parallel )
 
+importFrom( BB, BBsolve )
 importFrom( constrainedKriging, covmodel, f.point.block.cov, K, preCKrige )
 importFrom( lmtest, waldtest, waldtest.default )
 importFrom( nlme, fixef, fixed.effects, ranef, random.effects )
@@ -10,6 +11,7 @@ importFrom( RandomFields, Variogram )
 # exported functions
 
 export(
+  bbsolve.control,                  # ok
   bwd.transf,                       # ok
   compress,                         # ok
   cv,                               # ok
@@ -75,8 +77,10 @@ export(
 ##
 ##   compute.covariances,
 ##   compute.estimating.equations,
+##   compute.expanded.estimating.equations,
 ##   compute.semivariance,
 ##   dcorr.dparam,
+##   estimating.eqations.xihat,
 ##   estimate.xihat,
 ##   gcr,
 ##   georob.fit,

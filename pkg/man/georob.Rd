@@ -1,4 +1,4 @@
-% 2013-07-10 A. Papritz
+% 2013-07-12 A. Papritz
 % R CMD Rdconv -t html -o bla.html georob.Rd ; open bla.html; R CMD Rd2pdf --force georob.Rd; 
 
 \encoding{macintosh}
@@ -29,6 +29,7 @@ georob(formula, data, subset, weights, na.action, model = TRUE,
     fit.aniso = c(f1 = FALSE, f2 = FALSE, omega = FALSE, 
         phi = FALSE, zeta = FALSE), 
     tuning.psi = 2, initial.param = c("minimize", "exclude", "no"), 
+    root.finding = c("nleqslv", "bbsolve"),
     control = georob.control(...),
     verbose = 0, ...)
 }
@@ -160,6 +161,26 @@ georob(formula, data, subset, weights, na.action, model = TRUE,
   For \code{initial.param = "no"} no initial parameter values are computed
   and the estimating equations are solved with the initial values passed by
   \code{param} and \code{aniso} to \code{georob}.}
+  
+  \item{root.finding}{character string defining what solver is used 
+  for solving the system of nonlinear estimating equations.  Possible
+  values are:
+  
+    \itemize{
+      \item{\code{nleqslv} (default), which invokes
+      \code{\link[nleqslv]{nleqslv}} to solve the estimating equations of the
+      variogram and anisotropy parameters in combination with iterated
+      re-weighted least squares for solving the estimating equations of 
+      \eqn{ \widehat{\mbox{\boldmath$B$\unboldmath}}}{hatB} and 
+      \eqn{\widehat{\mbox{\boldmath$\beta$\unboldmath}}}{hat\beta}.}
+      
+      \item{\code{bbsolve} which invokes \code{\link[BB]{BBsolve}} for solving
+      the estimating equations of \eqn{ \widehat{\mbox{\boldmath$\xi$\unboldmath}}}{hatxi} 
+      and of the variogram and anisotropy parameters directly.
+      }
+    }
+  
+  }
     
   \item{control}{a list specifying parameters that control the behaviour of
   \code{georob}.  Use the function \code{\link{georob.control}} and see its

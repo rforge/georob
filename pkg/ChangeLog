@@ -125,3 +125,8 @@ processing col and pch arguments
 * georob.exported.functions.R (georob): computing robust initial variogram parameter estimates by minimizing sum of squared estimating equations
 * georob.private.functions.R (georob.fit, compute.estimating.equations): computing robust initial variogram parameter estimates by minimizing sum of squared estimating equations
 
+
+2013-07-12  Andreas Papritz  <papritz@env.ethz.ch>
+
+* georob.exported.functions.R (georob, georob.control, bbsolve.control): solving estimating equations by BBsolve{BB} (in addition to nleqlsv)
+* georob.private.functions.R (compute.estimating.equations, compute.expanded.estimating.equations, estimating.eqations.xihat, estimate.xihat, georob.fit, gradient.negative.restricted.loglikelihood, negative.restr.loglikelihood, prepare.likelihood.calculations): solving estimating equations by BBsolve{BB} (in addition to nleqlsv)
