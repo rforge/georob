@@ -1,6 +1,6 @@
 import( stats, parallel )
 
-importFrom( BB, BBsolve )
+# importFrom( BB, BBsolve )
 importFrom( constrainedKriging, covmodel, f.point.block.cov, K, preCKrige )
 importFrom( lmtest, waldtest, waldtest.default )
 importFrom( nlme, fixef, fixed.effects, ranef, random.effects )
@@ -11,7 +11,7 @@ importFrom( RandomFields, Variogram )
 # exported functions
 
 export(
-  bbsolve.control,                  # ok
+#   bbsolve.control,                  # ok
   bwd.transf,                       # ok
   compress,                         # ok
   cv,                               # ok

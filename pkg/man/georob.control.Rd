@@ -8,7 +8,7 @@
 \alias{dfwd.transf}
 \alias{bwd.transf}
 \alias{rq.control}
-\alias{bbsolve.control}
+% \alias{bbsolve.control}
 \alias{nleqslv.control}
 \alias{optim.control}
 
@@ -39,7 +39,8 @@ georob.control(initial.method = c("lmrob", "rq", "lm"), bhat = NULL,
     cov.ehat.p.bhat = FALSE, full.cov.ehat.p.bhat = FALSE,
     aux.cov.pred.target = FALSE, min.condnum = 1.e-12,
     rq = rq.control(), lmrob = lmrob.control(),
-    nleqslv = nleqslv.control(), bbsolve = bbsolve.control(), 
+    nleqslv = nleqslv.control(), 
+%     bbsolve = bbsolve.control(), 
     optim = optim.control(), full.output = TRUE)
     
 param.transf(variance = "log", snugget = "log", nugget = "log", scale = "log", 
@@ -62,7 +63,7 @@ nleqslv.control(nleqslv.method = c("Broyden", "Newton"),
     global = c( "dbldog", "pwldog", "qline", "gline", "none" ),
     xscalm = c( "fixed", "auto" ), nleqslv.control = NULL)
     
-bbsolve.control(bbsolve.method = c("2", "3", "1"), bbsolve.control = NULL)
+% bbsolve.control(bbsolve.method = c("2", "3", "1"), bbsolve.control = NULL)
     
 optim.control(optim.method = c("BFGS", "Nelder-Mead", "CG", 
         "L-BFGS-B", "SANN", "Brent"), lower = -Inf, upper = Inf, 
@@ -243,9 +244,9 @@ optim.control(optim.method = c("BFGS", "Nelder-Mead", "CG",
   \code{nleqslv.control} that generates such a list (see
   \code{\link[nleqslv]{nleqslv}} for allowed arguments).}
   
-  \item{bbsolve}{a list of arguments passed to \code{BBsolve} or a function
-  such as \code{bbsolve.control} that generates such a list (see
-  \code{\link[BB]{BBsolve}} for allowed arguments).}
+%   \item{bbsolve}{a list of arguments passed to \code{BBsolve} or a function
+%   such as \code{bbsolve.control} that generates such a list (see
+%   \code{\link[BB]{BBsolve}} for allowed arguments).}
     
   \item{optim}{a list of arguments passed to \code{optim} or a function
   such as \code{optim.control} that generates such a list (see
@@ -277,9 +278,9 @@ optim.control(optim.method = c("BFGS", "Nelder-Mead", "CG",
   to related arguments of \code{\link[nleqslv]{nleqslv}}.  Note that
   \code{nleqslv.} is stripped from the argument names on passing.}
   
-  \item{bbsolve.method, bbsolve.control}{arguments passed
-  to related arguments of \code{\link[BB]{BBsolve}}.  Note that
-  \code{bbsolve.} is stripped from the argument names on passing.}
+%   \item{bbsolve.method, bbsolve.control}{arguments passed
+%   to related arguments of \code{\link[BB]{BBsolve}}.  Note that
+%   \code{bbsolve.} is stripped from the argument names on passing.}
   
   \item{optim.method, lower, upper, hessian, optim.control}{arguments
   passed to related arguments of \code{\link[stats]{optim}}. Note that

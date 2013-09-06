@@ -130,3 +130,9 @@ processing col and pch arguments
 
 * georob.exported.functions.R (georob, georob.control, bbsolve.control): solving estimating equations by BBsolve{BB} (in addition to nleqlsv)
 * georob.private.functions.R (compute.estimating.equations, compute.expanded.estimating.equations, estimating.eqations.xihat, estimate.xihat, georob.fit, gradient.negative.restricted.loglikelihood, negative.restr.loglikelihood, prepare.likelihood.calculations): solving estimating equations by BBsolve{BB} (in addition to nleqlsv)
+
+
+2013-09-06  Andreas Papritz  <papritz@env.ethz.ch>
+
+* georob.exported.functions.R (georob, georob.control, bbsolve.control): code for solving estimating equations by BBsolve{BB} commented out (released to CRAN as version 0.1-2)
+* georob.private.functions.R (compute.estimating.equations, compute.expanded.estimating.equations, estimating.eqations.xihat, estimate.xihat, georob.fit, gradient.negative.restricted.loglikelihood, negative.restr.loglikelihood, prepare.likelihood.calculations): code for solving estimating equations by BBsolve{BB} commented out (released to CRAN as version 0.1-2)

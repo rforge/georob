@@ -19,7 +19,7 @@ georob <-
     aniso = c( f1 = 1., f2 = 1., omega = 90., phi = 90., zeta = 0. ),
     fit.aniso = c( f1 = FALSE, f2 = FALSE, omega = FALSE, phi = FALSE, zeta = FALSE ),
     tuning.psi = 2, initial.param  = c( "minimize", "exclude", "no" ),
-    root.finding = c( "nleqslv", "bbsolve" ),
+    ## root.finding = c( "nleqslv", "bbsolve" ),
     control = georob.control( ... ), verbose = 0,
     ...
   )
@@ -80,6 +80,7 @@ georob <-
   ## 2013-06-12 AP substituting [["x"]] for $x in all lists
   ## 2013-07-02 AP new transformation of rotation angles
   ## 2013-07-12 AP solving estimating equations by BBsolve{BB} (in addition to nleqlsv)
+  ## 2013-09-06 AP exclusive use of nleqslv for solving estimating equations
   
   ## check whether input is complete
   
@@ -318,7 +319,7 @@ georob <-
   aniso.missing <- missing( aniso ) && missing( fit.aniso )
   
   initial.param <- match.arg( initial.param )
-  root.finding <- match.arg( root.finding )
+  ## root.finding <- match.arg( root.finding )
   
   ## compute initial values of variogram and anisotropy parameters
   
@@ -364,7 +365,7 @@ georob <-
       ## estimate model parameters with pruned data set
       
       t.georob <- georob.fit(
-        root.finding = root.finding,
+        ## root.finding = root.finding,
         slv = TRUE,
         envir = envir,
         initial.objects = initial.objects,
@@ -396,8 +397,8 @@ georob <-
         zero.dist = control[["zero.dist"]],
         nleqslv.method =  control[["nleqslv"]][["method"]],
         nleqslv.control = control[["nleqslv"]][["control"]],
-        bbsolve.method =  control[["bbsolve"]][["method"]],
-        bbsolve.control = control[["bbsolve"]][["control"]],
+        ## bbsolve.method =  control[["bbsolve"]][["method"]],
+        ## bbsolve.control = control[["bbsolve"]][["control"]],
         optim.method =  control[["optim"]][["method"]],
         optim.lower = control[["optim"]][["lower"]],
         optim.upper = control[["optim"]][["upper"]],
@@ -434,7 +435,7 @@ georob <-
       ## estimate model parameters by minimizing sum( gradient^2)
       
       t.georob <- georob.fit(
-        root.finding = root.finding,
+        ## root.finding = root.finding,
         slv = FALSE,
         envir = envir,
         initial.objects = initial.objects,
@@ -466,8 +467,8 @@ georob <-
         zero.dist = control[["zero.dist"]],
         nleqslv.method =  control[["nleqslv"]][["method"]],
         nleqslv.control = control[["nleqslv"]][["control"]],
-        bbsolve.method =  control[["bbsolve"]][["method"]],
-        bbsolve.control = control[["bbsolve"]][["control"]],
+        ## bbsolve.method =  control[["bbsolve"]][["method"]],
+        ## bbsolve.control = control[["bbsolve"]][["control"]],
         optim.method =  control[["optim"]][["method"]],
         optim.lower = control[["optim"]][["lower"]],
         optim.upper = control[["optim"]][["upper"]],
@@ -508,7 +509,7 @@ georob <-
   if( verbose > 0 ) cat( "computing final parameter estimates ...\n" )
 
   r.georob <- georob.fit(
-    root.finding = root.finding,
+    ## root.finding = root.finding,
     slv = TRUE,
     envir = envir,
     initial.objects = initial.objects,
@@ -540,8 +541,8 @@ georob <-
     zero.dist = control[["zero.dist"]],
     nleqslv.method =  control[["nleqslv"]][["method"]],
     nleqslv.control = control[["nleqslv"]][["control"]],
-    bbsolve.method =  control[["bbsolve"]][["method"]],
-    bbsolve.control = control[["bbsolve"]][["control"]],
+    ## bbsolve.method =  control[["bbsolve"]][["method"]],
+    ## bbsolve.control = control[["bbsolve"]][["control"]],
     optim.method =  control[["optim"]][["method"]],
     optim.lower = control[["optim"]][["lower"]],
     optim.upper = control[["optim"]][["upper"]],
@@ -622,7 +623,7 @@ georob.control <-
     rq = rq.control(),
     lmrob = lmrob.control(),
     nleqslv = nleqslv.control(),
-    bbsolve = bbsolve.control(),
+    ## bbsolve = bbsolve.control(),
     optim = optim.control(),
     full.output = TRUE
   )
@@ -671,7 +672,9 @@ georob.control <-
     aux.cov.pred.target = aux.cov.pred.target,
     min.condnum = min.condnum,
     irf.models = c( "DeWijsian", "fractalB", "genB" ),
-    rq = rq, lmrob = lmrob, nleqslv = nleqslv, bbsolve = bbsolve, optim = optim, 
+    rq = rq, lmrob = lmrob, nleqslv = nleqslv, 
+    ## bbsolve = bbsolve, 
+    optim = optim, 
     full.output = full.output
   )
   
@@ -804,23 +807,23 @@ nleqslv.control <-
 }
 
 ## ======================================================================
-bbsolve.control <-
-  function( 
-    bbsolve.method = c( "2", "3", "1" ), 
-    bbsolve.control = NULL
-  )
-{
-  
-  ## function sets meaningful defaults for selected arguments of function
-  ## BBSolve{BB} 
-  
-  ## 2013-07-12 A. Papritz
-  
-  list( 
-    method = as.integer( match.arg( bbsolve.method ) ),
-    control = bbsolve.control
-  )
-}
+## bbsolve.control <-
+##   function( 
+##     bbsolve.method = c( "2", "3", "1" ), 
+##     bbsolve.control = NULL
+##   )
+## {
+##   
+##   ## function sets meaningful defaults for selected arguments of function
+##   ## BBSolve{BB} 
+##   
+##   ## 2013-07-12 A. Papritz
+##   
+##   list( 
+##     method = as.integer( match.arg( bbsolve.method ) ),
+##     control = bbsolve.control
+##   )
+## }
 
 ## ======================================================================
 optim.control <-
