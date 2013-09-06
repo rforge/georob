@@ -18,7 +18,7 @@ georob <-
     )[ names(param) ],
     aniso = c( f1 = 1., f2 = 1., omega = 90., phi = 90., zeta = 0. ),
     fit.aniso = c( f1 = FALSE, f2 = FALSE, omega = FALSE, phi = FALSE, zeta = FALSE ),
-    tuning.psi = 2, initial.param  = c( "minimize", "exclude", "no" ),
+    tuning.psi = 2, initial.param  = c( "exclude", "minimize", "no" ),
     ## root.finding = c( "nleqslv", "bbsolve" ),
     control = georob.control( ... ), verbose = 0,
     ...

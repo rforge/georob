@@ -1,4 +1,4 @@
-% 2013-07-12 A. Papritz
+% 2013-09-06 A. Papritz
 % R CMD Rdconv -t html -o bla.html georob.Rd ; open bla.html; R CMD Rd2pdf --force georob.Rd; 
 
 \encoding{macintosh}
@@ -28,7 +28,7 @@ georob(formula, data, subset, weights, na.action, model = TRUE,
     aniso = c(f1 = 1, f2 = 1, omega = 90, phi = 90, zeta = 0), 
     fit.aniso = c(f1 = FALSE, f2 = FALSE, omega = FALSE, 
         phi = FALSE, zeta = FALSE), 
-    tuning.psi = 2, initial.param = c("minimize", "exclude", "no"), 
+    tuning.psi = 2, initial.param = c("exclude", "minimize", "no"), 
 %     root.finding = c("nleqslv", "bbsolve"),
     control = georob.control(...),
     verbose = 0, ...)

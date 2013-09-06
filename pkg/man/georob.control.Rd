@@ -1,4 +1,4 @@
-% 2013-07-12 A. Papritz
+% 2013-09-06 A. Papritz
 % R CMD Rdconv -t html -o bla.html georob.control.Rd ; open bla.html; R CMD Rd2pdf --force georob.control.Rd; 
 \encoding{macintosh}
 \name{georob.control}
