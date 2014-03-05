@@ -1,7 +1,7 @@
 Package: georob
 Type: Package
 Title: Robust Geostatistical Analysis of Spatial Data
-Version: 0.1-1
+Version: 0.1-2
 Date: 2013-09-06
 Authors@R: c(
   person( "Andreas", "Papritz", role = c( "cre", "aut" ), 
@@ -9,7 +9,7 @@ Authors@R: c(
   person( "Cornelia", "Schwierz", role = "ctb" ))
 Depends: R(>= 2.14.0), sp(>= 0.9-60)
 Imports: constrainedKriging(>= 0.2-1), lmtest, nlme, nleqslv, quantreg, 
-         RandomFields(>= 2.0.55), robustbase(>= 0.9-5)
+         RandomFields(>= 2.0.55), robustbase(>= 0.90-2)
 Suggests: geoR
 Description: The georob package provides functions for fitting linear models 
          with spatially correlated errors by robust and Gaussian Restricted 
